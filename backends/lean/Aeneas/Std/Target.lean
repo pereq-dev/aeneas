@@ -15,7 +15,7 @@ namespace Aeneas.Std
 
     Used by multi-target dispatch: nothing meaningful can be deduced from
     its output. -/
-axiom get_target : Result String
+axiom get_target : RustM String
 
 @[step]
 axiom get_target.spec : get_target ⦃ fun _ => True ⦄
