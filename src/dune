@@ -64,6 +64,7 @@
   ExtractName
   ExtractSpec
   ExtractTypes
+  ExternalNames
   FunsAnalysis
   GitVersion
   HaxAttributes
