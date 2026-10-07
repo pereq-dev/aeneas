@@ -1,5 +1,5 @@
 [[92mInfo[39m ] Imported: tests/llbc/hax_specs_supertrait_assoc.llbc
-[[92mInfo[39m ] Aeneas__HaxProducer.produce, line 182:
+[[92mInfo[39m ] Aeneas__HaxProducer.produce, line 183:
 hax-specs: produced 1 FunctionSpec entries
 
 [[92mInfo[39m ] Creating missing directory: tests/lean/HaxSpecsSupertraitAssoc
