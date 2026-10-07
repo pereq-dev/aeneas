@@ -173,6 +173,8 @@ and id =
   | TraitConstId of TraitDeclId.id * assoc_const_id
       (** A trait associated constant *)
   | TraitParentClauseId of TraitDeclId.id * TraitClauseId.id
+  | SpecId of Spec.SpecId.id  (** A generated spec *)
+  | ProofObligationId of Spec.ProofId.id  (** A generated proof obligation *)
   | KeywordId
       (** Used for stored various strings like keywords, definitions which
           should always be in context, etc. and which can't be linked to one of
@@ -760,6 +762,8 @@ let id_to_string (span : Meta.span option) (id : id) (ctx : extraction_ctx) :
         Charon.GAstUtils.get_method_name ctx.crate trait_decl_id method_id
       in
       trait_decl_id_to_string trait_decl_id ^ ", method name: " ^ method_name
+  | SpecId id -> "spec_id: " ^ Spec.SpecId.to_string id
+  | ProofObligationId id -> "proof_obligation_id: " ^ Spec.ProofId.to_string id
 
 let lean_keywords_set : StringSet.t Lazy.t =
   lazy (StringSet.of_list LeanKeywords.lean_keywords)
@@ -805,6 +809,11 @@ let ctx_add (span : Meta.span) (id : id) (name : string) (ctx : extraction_ctx)
     names_maps_add id_to_string id (Some span) name ctx.names_maps
   in
   { ctx with names_maps }
+
+(** Is [name] already bound to an id? This is the check {!ctx_add} does for the
+    ids which are neither strict on collisions nor allowed to collide. *)
+let ctx_name_is_bound (name : string) (ctx : extraction_ctx) : bool =
+  StringSet.mem name ctx.names_maps.names_map.names_set
 
 (** Retrieve a name from the names maps, unescaped. Use {!ctx_get} instead if
     you want to print the string into a Lean file. *)

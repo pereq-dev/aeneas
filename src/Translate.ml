@@ -1772,6 +1772,9 @@ let extract_translated_crate (filename : string) (dest_dir : string)
       ctx trans_trait_impls
   in
 
+  (* Register the names generated for the specs (after the crate items) *)
+  let ctx = ExtractSpec.register_names ctx in
+
   let module_delimiter =
     match Config.backend () with
     | FStar -> "."
@@ -2316,5 +2319,10 @@ let translate_crate (filename : string) (dest_dir : string)
   (* Translate the module to the pure AST *)
   let trans_ctx, trans_crate = translate_crate_to_pure crate marked_ids in
 
-  extract_translated_crate filename dest_dir subdir crate trans_ctx trans_crate
-    extracted_opaque
+  try
+    extract_translated_crate filename dest_dir subdir crate trans_ctx
+      trans_crate extracted_opaque
+  with ExtractSpec.Name_clash ->
+    (* The clashes were reported *)
+    log#serror
+      "Name clash with the names generated for the specs: no file was generated"

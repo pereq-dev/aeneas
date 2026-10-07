@@ -31,6 +31,17 @@ are consumed by the producer.
   the supertraits of the trait as bounds of the conditions. Not supported: a
   supertrait with associated types, which Charon turns into type parameters of
   the conditions that the method does not have (an error).
+- The names `<fn>.pre`, `<fn>.post`, `<fn>.spec` and `<fn>.spec.proof` derive
+  from the registered name of `<fn>` (the conditions of a default method
+  `<Trait>.<m>.default` are `<Trait>.<m>.pre`/`.post`). They are registered
+  (`ExtractSpec.register_names`: the conditions under their function ids, the
+  spec and the obligation under `SpecId`/`ProofObligationId`) after the crate
+  items, so a clash with an item of the crate, or between the names generated
+  for two functions with the same registered name, is an error (#82). Such a
+  clash is fatal even without `-abort-on-error`: all the clashes are
+  reported, then the extraction stops before writing any file
+  (`ExtractSpec.Name_clash`), since Lean would reject the duplicate
+  definitions.
 - Obligations are plain theorems, not `@[spec]` lemmas: users register the
   specs they prove.
 - Spec and obligation files are emitted only when non-empty; their imports come
@@ -43,8 +54,9 @@ are consumed by the producer.
 - `tests/src/hax_specs` (expected outputs `tests/lean/HaxSpecs`): basic specs,
   const and trait generics, `future`, implicit generics, mutually recursive
   functions, unit arguments (#79), trait clauses of conditions and
-  supertraits (direct, transitive and generic, #80). The test crate uses
-  `hax-lib` 0.4.2.
+  supertraits (direct, transitive and generic, #80), items whose names look
+  like generated ones without clashing (#82). The test crate uses `hax-lib`
+  0.4.2.
 - `tests/src/hax_specs_supertrait_assoc` (known failure): a supertrait with an
   associated type.
 - The `hax-lib` crates are vendored for the nix check (`haxSpecsVendor` in
@@ -63,3 +75,5 @@ are consumed by the producer.
 - 2026-10-23: unit arguments are kept in specs and obligations (fork PR #79).
 - 2026-10-23: the trait clauses of the conditions of trait methods are matched
   with the method's, supertrait clauses through parent clauses (fork PR #80).
+- 2026-10-23: the names generated for specs are registered, and clashes are
+  errors (fork PR #82).
