@@ -691,6 +691,14 @@ let id_to_string (span : Meta.span option) (id : id) (ctx : extraction_ctx) :
     let trait_name = trait_decl_id_to_string ctx id in
     "trait_decl: " ^ trait_name ^ " (id: " ^ A.TraitDeclId.to_string id ^ ")"
   in
+  let subject_to_string (s : HaxSpecs.subject) : string =
+    match s with
+    | Fun id -> "function: " ^ fun_decl_id_to_string ctx id
+    | Trait id -> trait_decl_id_to_string id
+    | Impl id ->
+        "impl: "
+        ^ PrintPure.trait_impl_id_to_string (extraction_ctx_to_fmt_env ctx) id
+  in
   match id with
   | GlobalId gid -> global_decl_id_to_string ctx gid
   | GlobalPureValueId gid ->
@@ -768,8 +776,7 @@ let id_to_string (span : Meta.span option) (id : id) (ctx : extraction_ctx) :
           (fun (s : Spec.spec) -> Spec.SpecId.equal_id s.id id)
           ctx.specs
       with
-      | Some s ->
-          "spec of function: " ^ fun_decl_id_to_string ctx (Spec.spec_fun s)
+      | Some s -> "spec of " ^ subject_to_string (Spec.spec_subject s)
       | None -> "spec_id: " ^ Spec.SpecId.to_string id)
   | ProofObligationId id -> (
       match
@@ -778,8 +785,8 @@ let id_to_string (span : Meta.span option) (id : id) (ctx : extraction_ctx) :
           ctx.proof_obligations
       with
       | Some o ->
-          "proof obligation of function: "
-          ^ fun_decl_id_to_string ctx (Spec.proof_obligation_fun o)
+          "proof obligation of "
+          ^ subject_to_string (Spec.proof_obligation_subject o)
       | None -> "proof_obligation_id: " ^ Spec.ProofId.to_string id)
 
 let lean_keywords_set : StringSet.t Lazy.t =

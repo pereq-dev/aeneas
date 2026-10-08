@@ -21,15 +21,15 @@ type proof_obligation = {
 }
 [@@deriving show]
 
-(** The function a spec is about *)
-let spec_fun (s : spec) : Pure.FunDeclId.id =
+(** What a spec is about *)
+let spec_subject (s : spec) : HaxSpecs.subject =
   match s.kind with
-  | HaxSpec hs -> HaxSpecs.spec_fun hs
+  | HaxSpec hs -> HaxSpecs.spec_subject hs
 
-(** The function a proof obligation is about *)
-let proof_obligation_fun (o : proof_obligation) : Pure.FunDeclId.id =
+(** What a proof obligation is about *)
+let proof_obligation_subject (o : proof_obligation) : HaxSpecs.subject =
   match o.kind with
-  | HaxProof ho -> HaxSpecs.obligation_fun ho
+  | HaxProof ho -> HaxSpecs.obligation_subject ho
 
 (** The extra Lean modules the configured spec source needs to elaborate *)
 let required_imports () : string list =
