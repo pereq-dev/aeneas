@@ -1,6 +1,0 @@
-[[92mInfo[39m ] Imported: tests/llbc/hax_specs_supertrait_assoc.llbc
-[[92mInfo[39m ] Creating missing directory: tests/lean/HaxSpecsSupertraitAssoc
-[[91mError[39m] A pre/post condition does not have the same type and const generic parameters as its function (e.g. a supertrait of the method's trait has associated types)
-Source: 'src/lib.rs', lines 16:4-18:5
-Compiler source: extract/ExtractHaxSpecs.ml, line 110
-

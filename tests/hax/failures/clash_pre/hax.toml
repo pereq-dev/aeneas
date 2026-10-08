@@ -1,0 +1,9 @@
+# See `tests/hax/hax.toml`.
+project-files = false
+
+[tools]
+aeneas = { path = "../../../../bin/aeneas" }
+charon = { path = "../../../../charon/bin/charon" }
+
+[scenario.failure]
+backend = "lean"

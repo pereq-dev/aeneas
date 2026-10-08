@@ -1,10 +1,10 @@
+# A hax test which must fail: see `tests/README.md`.
 [package]
-name = "hax_specs_clash_spec"
+name = "supertrait_assoc"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "hax_specs_clash_spec"
 path = "src/lib.rs"
 
 [dependencies]
