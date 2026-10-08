@@ -51,22 +51,54 @@ are consumed by the producer.
 
 ## Tests
 
-- `tests/src/hax_specs` (expected outputs `tests/lean/HaxSpecs`): basic specs,
-  const and trait generics, `future`, implicit generics, mutually recursive
-  functions, unit arguments (#79), trait clauses of conditions and
-  supertraits (direct, transitive and generic, #80), items whose names look
-  like generated ones without clashing (#82). The test crate uses `hax-lib`
-  0.4.2.
-- `tests/src/hax_specs_supertrait_assoc` (known failure): a supertrait with an
-  associated type.
-- `tests/src/hax_specs_clash_pre` and `tests/src/hax_specs_clash_spec`
-  (known failures, expected outputs `tests/src/hax_specs_clash_*.lean.out`):
-  an item `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp.
-  the spec) of a contracted `foo`, which is an error (#82). The test runner
-  passes `-abort-on-error`, so Aeneas stops at the first error: one crate per
-  clash. They have the same dependencies as `hax_specs`.
-- The `hax-lib` crates are vendored for the nix check (`haxSpecsVendor` in
-  `flake.nix`, shared by the `hax_specs*` crates).
+- `tests/hax` (fork PR #83) is a crate on `hax-lib` 0.4.2, extracted the way
+  hax users do it: `cargo hax extract` runs the proof scenario `hax-tests` of
+  `tests/hax/hax.toml`, which points hax at `bin/aeneas` and
+  `charon/bin/charon`. The extracted code (`tests/hax/proofs/hax-tests/lean`,
+  Lean package `HaxTests`, under `Extraction/`) is committed, next to
+  handwritten assumptions (`Assumptions/`) and proofs of the obligations
+  (`Verification/`). Every contract is proved; one that cannot be is left out
+  of the crate, with a comment. `make verify-hax` checks that every obligation
+  has a proof, not commented out and without `sorry`.
+- The test cases are in `tests/hax/src/lib.rs`: basic specs, const and trait
+  generics, `future`, implicit generics, mutually recursive functions, unit
+  arguments (#79), trait clauses of conditions and supertraits (direct and
+  transitive, #80), items whose names look like generated ones without
+  clashing (#82).
+- `tests/hax/failures/clash_pre` and `tests/hax/failures/clash_spec`: an item
+  `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp. the
+  spec) of a contracted `foo`, which is an error (#82). One crate per clash,
+  so that each output shows one. `make extract-hax` extracts each
+  crate of `tests/hax/failures` with `cargo hax extract`, expects it to fail,
+  and records the error of Aeneas in `tests/hax/failures/<crate>.out`
+  (committed).
+- `tests/hax/failures/supertrait_assoc`: conditions of a method of a trait
+  whose supertrait has an associated type, which is an error (#80).
+- Not run by `make test`: `make test-hax HAX_DIR=<hax checkout>`
+  (`scripts/test-hax.sh`; `extract-hax` and `verify-hax` run the two steps)
+  needs `cargo hax` and a checkout of hax. `make clean-generated-aeneas`
+  leaves `tests/hax` alone.
+- `make verify-hax` builds the extracted code against the Lean libraries
+  (`Hax`, `CoreModels`) of the hax checkout, which must build against this
+  aeneas: Lean modules, on aeneas's Lean toolchain (hax `main` does since
+  721d1a27, 2026-11-04).
+
+## Rebase notes
+
+- `tests/hax` replaced `tests/src/hax_specs` and the `tests/src/hax_specs_*`
+  known failures (and the vendored `hax-lib` of the nix check,
+  `haxSpecsVendor`). Tests that upstream-port commits add to
+  `tests/src/hax_specs` belong in `tests/hax/src/lib.rs` (failures: a crate in
+  `tests/hax/failures`), and the outputs must be re-extracted with
+  `make extract-hax`.
+- A bump of `backends/lean/lean-toolchain` must also update
+  `tests/hax/proofs/hax-tests/lean/lean-toolchain` (`make verify-hax` checks
+  it).
+- The proof check of `scripts/test-hax.sh` (`verify`: every obligation of
+  `Extraction/ProofObligations.lean` has a theorem of the same name under
+  `Verification/`, without `sorry`) compares names only. Once hax runs Lean's
+  comparator (which checks that the handwritten theorems state the extracted
+  obligations and use no extra axioms), use it instead and drop this check.
 
 ## History
 
@@ -83,3 +115,5 @@ are consumed by the producer.
   with the method's, supertrait clauses through parent clauses (fork PR #80).
 - 2026-10-23: the names generated for specs are registered, and clashes are
   errors (fork PR #82).
+- 2026-10-23: the tests moved to `tests/hax`, extracted end-to-end with
+  `cargo hax` (fork PR #83).

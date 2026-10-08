@@ -216,13 +216,6 @@
             re
           ]);
         };
-        
-        # Vendor all cargo dependencies for the hax_specs test crates (hax_specs,
-        # hax_specs_supertrait_assoc, hax_specs_clash_*)
-        haxSpecsVendor =
-          (import inputs.charon.inputs.nixpkgs {
-            inherit system;
-          }).rustPlatform.importCargoLock { lockFile = ./tests/src/hax_specs/Cargo.lock; };
 
         # Run the translation on various files.
         # Make sure we don't need to recompile the package whenever we make
@@ -248,22 +241,6 @@
             # In Nix, the Rust toolchain is already nightly — no need for +nightly
             export RUSTC_CMD=rustc
             export CARGO_CMD=cargo
-
-            # Configure cargo to use pre-vendored dependencies (the
-            # hax_specs_supertrait_assoc and hax_specs_clash_* crates have the
-            # same dependencies as hax_specs)
-            for crate in hax_specs hax_specs_supertrait_assoc \
-                hax_specs_clash_pre hax_specs_clash_spec; do
-              mkdir -p tests/src/$crate/.cargo
-              cat > tests/src/$crate/.cargo/config.toml <<CARGOEOF
-            [net]
-            offline = true
-            [source.crates-io]
-            replace-with = "vendored-sources"
-            [source.vendored-sources]
-            directory = "${haxSpecsVendor}"
-            CARGOEOF
-            done
 
             # Copy the tests
             cp -r tests tests-copy

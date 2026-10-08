@@ -1,7 +1,6 @@
-// Known failure: conditions of a method of a trait whose supertrait has an
-// associated type. hax-lib adds the supertrait as a bound of the conditions,
-// whose associated type Charon turns into a type parameter that the method
-// does not have.
+//! The conditions of `Sub::first` have the supertrait `Container` as a bound
+//! (added by hax-lib), whose associated type `Item` Charon turns into a type
+//! parameter that `first` does not have: this is an error.
 #![allow(dead_code)]
 use hax_lib::*;
 
