@@ -60,11 +60,11 @@ are consumed by the producer.
   (`Verification/`). Every contract is proved; one that cannot be is left out
   of the crate, with a comment. `make verify-hax` checks that every obligation
   has a proof, not commented out and without `sorry`.
-- The test cases are in `tests/hax/src/lib.rs`: basic specs, const and trait
-  generics, `future`, implicit generics, mutually recursive functions, unit
-  arguments (#79), trait clauses of conditions and supertraits (direct and
-  transitive, #80), items whose names look like generated ones without
-  clashing (#82).
+- The modules of `tests/hax/src/specs/`: the shape of contracts, arguments
+  (unit arguments, #79), `&mut` inputs and `future`, generics, mutually
+  recursive functions, trait methods (trait clauses of conditions and
+  supertraits, direct and transitive, #80) and names that look like generated
+  ones without clashing (#82).
 - `tests/hax/failures/clash_pre` and `tests/hax/failures/clash_spec`: an item
   `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp. the
   spec) of a contracted `foo`, which is an error (#82). One crate per clash,
@@ -88,7 +88,8 @@ are consumed by the producer.
 - `tests/hax` replaced `tests/src/hax_specs` and the `tests/src/hax_specs_*`
   known failures (and the vendored `hax-lib` of the nix check,
   `haxSpecsVendor`). Tests that upstream-port commits add to
-  `tests/src/hax_specs` belong in `tests/hax/src/lib.rs` (failures: a crate in
+  `tests/src/hax_specs` belong in a module of `tests/hax/src/specs/` (e.g.
+  `mutual.rs`, from the 2026-10-20 rebase; failures: a crate in
   `tests/hax/failures`), and the outputs must be re-extracted with
   `make extract-hax`.
 - A bump of `backends/lean/lean-toolchain` must also update
