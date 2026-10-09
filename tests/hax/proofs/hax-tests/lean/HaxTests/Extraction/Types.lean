@@ -24,74 +24,61 @@ set_option maxRecDepth 2048
 
 namespace hax_tests
 
-/-- Trait declaration: [hax_tests::extra_args::Val]
-    Source: 'src/lib.rs', lines 61:4-63:5 -/
-structure extra_args.Val (Self : Type _) where
-  value : Self → RustM Std.U32
-
-/-- [hax_tests::const_generic_ty::MyStruct]
-    Source: 'src/lib.rs', lines 117:4-119:5
-    Visibility: public -/
-structure const_generic_ty.MyStruct (N : Std.Usize) where
-  cap : Std.Usize
-
-/-- [hax_tests::implicit_generics::Pair]
-    Source: 'src/lib.rs', lines 143:4-145:5
-    Visibility: public -/
-structure implicit_generics.Pair (T : Type _) (N : Std.Usize) where
-  fst : T
-
-/-- Trait declaration: [hax_tests::unit_args::Size]
-    Source: 'src/lib.rs', lines 200:4-202:5 -/
-structure unit_args.Size (Self : Type _) where
+/-- Trait declaration: [hax_tests::specs::arguments::Size]
+    Source: 'src/specs/arguments.rs', lines 5:0-7:1 -/
+structure specs.arguments.Size (Self : Type _) where
   len : Self → RustM Std.Usize
 
-/-- Trait declaration: [hax_tests::supertraits::A]
-    Source: 'src/lib.rs', lines 230:4-232:5
+/-- Trait declaration: [hax_tests::specs::generics::Val]
+    Source: 'src/specs/generics.rs', lines 16:0-18:1 -/
+structure specs.generics.Val (Self : Type _) where
+  value : Self → RustM Std.U32
+
+/-- [hax_tests::specs::generics::MyStruct]
+    Source: 'src/specs/generics.rs', lines 32:0-34:1
     Visibility: public -/
-structure supertraits.A (Self : Type _) where
+structure specs.generics.MyStruct (N : Std.Usize) where
+  cap : Std.Usize
+
+/-- [hax_tests::specs::generics::Pair]
+    Source: 'src/specs/generics.rs', lines 53:0-55:1
+    Visibility: public -/
+structure specs.generics.Pair (T : Type _) (N : Std.Usize) where
+  fst : T
+
+/-- Trait declaration: [hax_tests::specs::traits::A]
+    Source: 'src/specs/traits.rs', lines 7:0-9:1
+    Visibility: public -/
+structure specs.traits.A (Self : Type _) where
   a : Self → RustM Std.Usize
 
-/-- Trait declaration: [hax_tests::supertraits::B]
-    Source: 'src/lib.rs', lines 235:4-243:5
+/-- Trait declaration: [hax_tests::specs::traits::B]
+    Source: 'src/specs/traits.rs', lines 12:0-20:1
     Visibility: public -/
-structure supertraits.B (Self : Type _) where
-  AInst : supertraits.A Self
+structure specs.traits.B (Self : Type _) where
+  AInst : specs.traits.A Self
   b : Self → RustM Std.Usize
   provided : Self → RustM Std.Usize
 
-/-- Trait declaration: [hax_tests::supertraits::C]
-    Source: 'src/lib.rs', lines 248:4-254:5
+/-- Trait declaration: [hax_tests::specs::traits::C]
+    Source: 'src/specs/traits.rs', lines 25:0-31:1
     Visibility: public -/
-structure supertraits.C (Self : Type _) where
-  BInst : supertraits.B Self
+structure specs.traits.C (Self : Type _) where
+  BInst : specs.traits.B Self
   provided_c : Self → RustM Std.Usize
 
-/-- Trait declaration: [hax_tests::supertraits::G]
-    Source: 'src/lib.rs', lines 257:4-259:5
+/-- Trait declaration: [hax_tests::specs::traits::H]
+    Source: 'src/specs/traits.rs', lines 37:0-46:1
     Visibility: public -/
-structure supertraits.G (Self : Type _) (T : Type _) where
-  g : Self → RustM T
-
-/-- Trait declaration: [hax_tests::supertraits::H]
-    Source: 'src/lib.rs', lines 263:4-267:5
-    Visibility: public -/
-structure supertraits.H (Self : Type _) (T : Type _) where
-  GInst : supertraits.G Self T
-  provided_h : Self → RustM T
-
-/-- Trait declaration: [hax_tests::trait_clauses::H]
-    Source: 'src/lib.rs', lines 278:4-287:5
-    Visibility: public -/
-structure trait_clauses.H (Self : Type _) (T : Type _) where
+structure specs.traits.H (Self : Type _) (T : Type _) where
   h : Self → RustM T
   provided_h : forall {U : Type} (corecloneCloneInst : core.clone.Clone U),
     Self → U → RustM T
 
-/-- Trait declaration: [hax_tests::trait_clauses::W]
-    Source: 'src/lib.rs', lines 293:4-302:5
+/-- Trait declaration: [hax_tests::specs::traits::W]
+    Source: 'src/specs/traits.rs', lines 52:0-61:1
     Visibility: public -/
-structure trait_clauses.W (Self : Type _) (U : Type _) where
+structure specs.traits.W (Self : Type _) (U : Type _) where
   corecloneCloneInst : core.clone.Clone U
   provided_w : Self → U → RustM U
 
