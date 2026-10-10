@@ -244,16 +244,16 @@ theorem Tuple.Insts.Hax_testsSpecsArgumentsSize.len.spec.proof (_ : Unit) :
   hax_mvcgen
 
 theorem
-  specs.traits.B.provided.default.spec.proof {Self : Type} (BInst :
-                                           specs.traits.B Self) (self : Self) :
-  specs.traits.B.provided.default.spec BInst self
+  specs.traits.condition_clauses.B.provided.default.spec.proof {Self : Type} (BInst :
+                                           specs.traits.condition_clauses.B Self) (self : Self) :
+  specs.traits.condition_clauses.B.provided.default.spec BInst self
   := by
-  unfold specs.traits.B.provided.default.spec specs.traits.B.provided.default
+  unfold specs.traits.condition_clauses.B.provided.default.spec specs.traits.condition_clauses.B.provided.default
   intro h
-  unfold specs.traits.B.provided.pre at h
+  unfold specs.traits.condition_clauses.B.provided.pre at h
   cases hv : BInst.AInst.a self
   · rw [hv] at h
-    hax_mvcgen [specs.traits.B.provided.post, hv]
+    hax_mvcgen [specs.traits.condition_clauses.B.provided.post, hv]
     simp
   · rw [hv] at h
     simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h
@@ -261,16 +261,16 @@ theorem
     simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h
 
 theorem
-  specs.traits.C.provided_c.default.spec.proof {Self : Type} (CInst :
-                                             specs.traits.C Self) (self : Self)
-  : specs.traits.C.provided_c.default.spec CInst self
+  specs.traits.condition_clauses.C.provided_c.default.spec.proof {Self : Type} (CInst :
+                                             specs.traits.condition_clauses.C Self) (self : Self)
+  : specs.traits.condition_clauses.C.provided_c.default.spec CInst self
   := by
-  unfold specs.traits.C.provided_c.default.spec specs.traits.C.provided_c.default
+  unfold specs.traits.condition_clauses.C.provided_c.default.spec specs.traits.condition_clauses.C.provided_c.default
   intro h
-  unfold specs.traits.C.provided_c.pre at h
+  unfold specs.traits.condition_clauses.C.provided_c.pre at h
   cases hv : CInst.BInst.AInst.a self
   · rw [hv] at h
-    hax_mvcgen [specs.traits.C.provided_c.post, hv]
+    hax_mvcgen [specs.traits.condition_clauses.C.provided_c.post, hv]
     simp
   · rw [hv] at h
     simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h
@@ -278,18 +278,18 @@ theorem
     simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h
 
 theorem
-  specs.traits.H.provided_h.default.spec.proof {Self : Type} {T : Type}
-  {U : Type} (HInst : specs.traits.H Self T)
+  specs.traits.condition_clauses.H.provided_h.default.spec.proof {Self : Type} {T : Type}
+  {U : Type} (HInst : specs.traits.condition_clauses.H Self T)
   (corecloneCloneInst : core.clone.Clone U) (self : Self) (u : U) :
-  specs.traits.H.provided_h.default.spec HInst corecloneCloneInst self u
+  specs.traits.condition_clauses.H.provided_h.default.spec HInst corecloneCloneInst self u
   := by
-  unfold specs.traits.H.provided_h.default.spec
-    specs.traits.H.provided_h.default
+  unfold specs.traits.condition_clauses.H.provided_h.default.spec
+    specs.traits.condition_clauses.H.provided_h.default
   intro h
-  unfold specs.traits.H.provided_h.pre at h
+  unfold specs.traits.condition_clauses.H.provided_h.pre at h
   cases hc : corecloneCloneInst.clone u
   · cases hv : HInst.h self
-    · hax_mvcgen [specs.traits.H.provided_h.post, hc, hv]
+    · hax_mvcgen [specs.traits.condition_clauses.H.provided_h.post, hc, hv]
     all_goals
       rw [hc, hv] at h
       simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h
@@ -298,16 +298,16 @@ theorem
     simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h
 
 theorem
-  specs.traits.W.provided_w.default.spec.proof {Self : Type} {U : Type}
-  (WInst : specs.traits.W Self U) (self : Self) (u : U) :
-  specs.traits.W.provided_w.default.spec WInst self u
+  specs.traits.condition_clauses.W.provided_w.default.spec.proof {Self : Type} {U : Type}
+  (WInst : specs.traits.condition_clauses.W Self U) (self : Self) (u : U) :
+  specs.traits.condition_clauses.W.provided_w.default.spec WInst self u
   := by
-  unfold specs.traits.W.provided_w.default.spec
-    specs.traits.W.provided_w.default
+  unfold specs.traits.condition_clauses.W.provided_w.default.spec
+    specs.traits.condition_clauses.W.provided_w.default
   intro h
-  unfold specs.traits.W.provided_w.pre at h
+  unfold specs.traits.condition_clauses.W.provided_w.pre at h
   cases hc : WInst.corecloneCloneInst.clone u
-  · hax_mvcgen [specs.traits.W.provided_w.post, hc]
+  · hax_mvcgen [specs.traits.condition_clauses.W.provided_w.post, hc]
   all_goals
     rw [hc] at h
     simp [Triple, WP.wp, PredTrans.apply, Functor.map] at h

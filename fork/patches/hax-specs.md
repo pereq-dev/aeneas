@@ -32,8 +32,7 @@ are consumed by the producer.
   supertrait with associated types, which Charon turns into type parameters of
   the conditions that the method does not have (an error).
 - Conditions on a required trait method (no default body) are dropped,
-  without a warning: no `pre`/`post`/spec/obligation is extracted for them
-  (`traits.rs`, trait `D`).
+  without a warning: no `pre`/`post`/spec/obligation is extracted for them.
 - The names `<fn>.pre`, `<fn>.post`, `<fn>.spec` and `<fn>.spec.proof` derive
   from the registered name of `<fn>` (the conditions of a default method
   `<Trait>.<m>.default` are `<Trait>.<m>.pre`/`.post`). They are registered
@@ -65,10 +64,11 @@ are consumed by the producer.
   has a proof, not commented out and without `sorry`.
 - The modules of `tests/hax/src/specs/`: the shape of contracts, arguments
   (unit arguments, #79), `&mut` inputs and `future`, generics, mutually
-  recursive functions, trait methods (trait clauses of conditions and
-  supertraits, direct and transitive, #80; the conditions of the required
-  method `D::required` are dropped, see `traits.rs`) and names that look like
-  generated ones without clashing (#82).
+  recursive functions, trait methods (`specs/traits/condition_clauses.rs`:
+  trait clauses of conditions and supertraits, direct and transitive, #80,
+  and the dropped conditions of the required method `D::required`; the
+  trait-level testsuite of `specs/traits/`) and names that look like generated
+  ones without clashing (#82).
 - `tests/hax/failures/clash_pre` and `tests/hax/failures/clash_spec`: an item
   `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp. the
   spec) of a contracted `foo`, which is an error (#82). One crate per clash,
