@@ -31,6 +31,9 @@ are consumed by the producer.
   the supertraits of the trait as bounds of the conditions. Not supported: a
   supertrait with associated types, which Charon turns into type parameters of
   the conditions that the method does not have (an error).
+- Conditions on a required trait method (no default body) are dropped,
+  without a warning: no `pre`/`post`/spec/obligation is extracted for them
+  (`traits.rs`, trait `D`).
 - The names `<fn>.pre`, `<fn>.post`, `<fn>.spec` and `<fn>.spec.proof` derive
   from the registered name of `<fn>` (the conditions of a default method
   `<Trait>.<m>.default` are `<Trait>.<m>.pre`/`.post`). They are registered
@@ -63,8 +66,9 @@ are consumed by the producer.
 - The modules of `tests/hax/src/specs/`: the shape of contracts, arguments
   (unit arguments, #79), `&mut` inputs and `future`, generics, mutually
   recursive functions, trait methods (trait clauses of conditions and
-  supertraits, direct and transitive, #80) and names that look like generated
-  ones without clashing (#82).
+  supertraits, direct and transitive, #80; the conditions of the required
+  method `D::required` are dropped, see `traits.rs`) and names that look like
+  generated ones without clashing (#82).
 - `tests/hax/failures/clash_pre` and `tests/hax/failures/clash_spec`: an item
   `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp. the
   spec) of a contracted `foo`, which is an error (#82). One crate per clash,
@@ -118,3 +122,4 @@ are consumed by the producer.
   errors (fork PR #82).
 - 2026-10-23: the tests moved to `tests/hax`, extracted end-to-end with
   `cargo hax` (fork PR #83).
+- 2026-11-04: rebased on the 2026-11-02 dev (no change).
