@@ -291,61 +291,6 @@ theorem
   specs.traits.trait_generics.use_conv.spec ConvCU8Inst c
   := by sorry
 
-theorem
-  specs.traits.condition_clauses.B.provided.default.spec.proof {Self : Type _}
-                                                              (BInst :
-                                                              specs.traits.condition_clauses.B
-                                                              Self)
-  (self : Self) :
-  specs.traits.condition_clauses.B.provided.default.spec BInst self
-  := by sorry
-
-theorem
-  specs.traits.condition_clauses.C.provided_c.default.spec.proof {Self :
-                                                                Type _} (CInst
-                                                                :
-                                                                specs.traits.condition_clauses.C
-                                                                Self)
-  (self : Self) :
-  specs.traits.condition_clauses.C.provided_c.default.spec CInst self
-  := by sorry
-
-theorem
-  specs.traits.condition_clauses.H.provided_h.default.spec.proof {Self :
-                                                                Type _} {T :
-                                                                Type _} {U :
-                                                                Type _} (HInst
-                                                                :
-                                                                specs.traits.condition_clauses.H
-                                                                Self T)
-                                                                (corecloneCloneInst
-                                                                :
-                                                                core.clone.Clone
-                                                                U)
-  (self : Self) (u : U) :
-  specs.traits.condition_clauses.H.provided_h.default.spec HInst
-  corecloneCloneInst self u
-  := by sorry
-
-theorem
-  specs.traits.condition_clauses.W.provided_w.default.spec.proof {Self :
-                                                                Type _} {U :
-                                                                Type _} (WInst
-                                                                :
-                                                                specs.traits.condition_clauses.W
-                                                                Self U)
-  (self : Self) (u : U) :
-  specs.traits.condition_clauses.W.provided_w.default.spec WInst self u
-  := by sorry
-
-theorem
-  specs.traits.default_methods.D.next.default.spec.proof {Self : Type _} (DInst
-                                                        :
-                                                        specs.traits.default_methods.D
-                                                        Self) (self : Self) :
-  specs.traits.default_methods.D.next.default.spec DInst self
-  := by sorry
-
 theorem U32.Insts.Hax_testsSpecsTraitsImpl_contractFoo.f.spec.proof
   (self : Std.U32) : U32.Insts.Hax_testsSpecsTraitsImpl_contractFoo.f.spec self
   := by sorry

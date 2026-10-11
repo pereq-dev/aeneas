@@ -159,14 +159,14 @@ structure specs.traits.condition_clauses.B (Self : Type _) where
   provided : Self → RustM Std.Usize
 
 /-- Trait declaration: [hax_tests::specs::traits::condition_clauses::C]
-    Source: 'src/specs/traits/condition_clauses.rs', lines 25:0-31:1
+    Source: 'src/specs/traits/condition_clauses.rs', lines 24:0-30:1
     Visibility: public -/
 structure specs.traits.condition_clauses.C (Self : Type _) where
   BInst : specs.traits.condition_clauses.B Self
   provided_c : Self → RustM Std.Usize
 
 /-- Trait declaration: [hax_tests::specs::traits::condition_clauses::H]
-    Source: 'src/specs/traits/condition_clauses.rs', lines 37:0-46:1
+    Source: 'src/specs/traits/condition_clauses.rs', lines 35:0-44:1
     Visibility: public -/
 structure specs.traits.condition_clauses.H (Self : Type _) (T : Type _) where
   h : Self → RustM T
@@ -174,14 +174,14 @@ structure specs.traits.condition_clauses.H (Self : Type _) (T : Type _) where
     Self → U → RustM T
 
 /-- Trait declaration: [hax_tests::specs::traits::condition_clauses::W]
-    Source: 'src/specs/traits/condition_clauses.rs', lines 52:0-61:1
+    Source: 'src/specs/traits/condition_clauses.rs', lines 49:0-58:1
     Visibility: public -/
 structure specs.traits.condition_clauses.W (Self : Type _) (U : Type _) where
   corecloneCloneInst : core.clone.Clone U
   provided_w : Self → U → RustM U
 
 /-- Trait declaration: [hax_tests::specs::traits::condition_clauses::D]
-    Source: 'src/specs/traits/condition_clauses.rs', lines 67:0-71:1
+    Source: 'src/specs/traits/condition_clauses.rs', lines 63:0-67:1
     Visibility: public -/
 structure specs.traits.condition_clauses.D (Self : Type _) where
   required : Self → Std.U32 → RustM Std.U32

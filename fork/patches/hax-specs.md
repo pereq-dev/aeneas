@@ -33,17 +33,20 @@ are consumed by the producer.
   the conditions that the method does not have (an error).
 - Conditions on a required trait method (no default body) are dropped,
   without a warning: no `pre`/`post`/spec/obligation is extracted for them.
+  Superseded by `hax-trait-specs`: the contracts of all the trait methods
+  become `<Trait>.<m>.pre`/`.post` and a field of `<Trait>.Lawful`.
 - The names `<fn>.pre`, `<fn>.post`, `<fn>.spec` and `<fn>.spec.proof` derive
   from the registered name of `<fn>` (the conditions of a default method
-  `<Trait>.<m>.default` are `<Trait>.<m>.pre`/`.post`). They are registered
-  (`ExtractSpec.register_names`: the conditions under their function ids, the
-  spec and the obligation under `SpecId`/`ProofObligationId`) after the crate
-  items, so a clash with an item of the crate, or between the names generated
-  for two functions with the same registered name, is an error (#82). Such a
-  clash is fatal even without `-abort-on-error`: all the clashes are
-  reported, then the extraction stops before writing any file
-  (`ExtractSpec.Name_clash`), since Lean would reject the duplicate
-  definitions.
+  `<Trait>.<m>.default` are `<Trait>.<m>.pre`/`.post`; superseded by
+  `hax-trait-specs`: a default method gets no spec of its own). They are
+  registered (`ExtractSpec.register_names`: the conditions under their
+  function ids, the spec and the obligation under
+  `SpecId`/`ProofObligationId`) after the crate items, so a clash with an item
+  of the crate, or between the names generated for two functions with the same
+  registered name, is an error (#82). Such a clash is fatal even without
+  `-abort-on-error`: all the clashes are reported, then the extraction stops
+  before writing any file (`ExtractSpec.Name_clash`), since Lean would reject
+  the duplicate definitions.
 - Obligations are plain theorems, not `@[spec]` lemmas: users register the
   specs they prove.
 - Spec and obligation files are emitted only when non-empty; their imports come
@@ -66,8 +69,8 @@ are consumed by the producer.
   (unit arguments, #79), `&mut` inputs and `future`, generics, mutually
   recursive functions, trait methods (`specs/traits/condition_clauses.rs`:
   trait clauses of conditions and supertraits, direct and transitive, #80,
-  and the dropped conditions of the required method `D::required`; the
-  trait-level testsuite of `specs/traits/`) and names that look like generated
+  and conditions on the required method `D::required`; the trait-level
+  testsuite of `specs/traits/`) and names that look like generated
   ones without clashing (#82).
 - `tests/hax/failures/clash_pre` and `tests/hax/failures/clash_spec`: an item
   `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp. the
