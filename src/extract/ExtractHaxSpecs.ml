@@ -175,7 +175,8 @@ let emit_conditions ctx fmt ~pre ~post =
 (** {1 Names}
 
     The contract of [<fn>] generates [<fn>.pre], [<fn>.post], [<fn>.spec] and
-    [<fn>.spec.proof]. *)
+    [<fn>.spec.proof]. The contract of a method [<m>] of a trait [<Trait>]
+    generates [<Trait>.<m>.pre] and [<Trait>.<m>.post]. *)
 
 (** The registered name of [parent] *)
 let registered_fun_name (ctx : ExtractBase.extraction_ctx)
@@ -184,23 +185,31 @@ let registered_fun_name (ctx : ExtractBase.extraction_ctx)
     (FunId (FromLlbc (FunId parent.def_id, parent.loop_id)))
     ctx
 
-(** [<fn>.<suffix>]. The conditions of a default method
-    [<Trait>.<method>.default] are named after the method:
-    [<Trait>.<method>.pre] / [.post]. *)
-let cond_name (ctx : ExtractBase.extraction_ctx) (parent : Pure.fun_decl)
-    (parent_name : string) (suffix : string) : string =
-  let base =
-    if ExtractBase.fun_source_is_trait_default ctx parent.src then
-      ExtractBase.ctx_compute_fun_name_no_suffix parent.item_meta parent.src
-        ~is_trait_decl_field:true ctx
-    else parent_name
-  in
-  base ^ "." ^ suffix
+(** [<fn>.<suffix>] *)
+let cond_name (parent_name : string) (suffix : string) : string =
+  ExtractBuiltin.flatten_name [ parent_name; suffix ]
 
-let spec_name (parent_name : string) : string = parent_name ^ ".spec"
+let spec_name (parent_name : string) : string =
+  ExtractBuiltin.flatten_name [ parent_name; "spec" ]
 
 let proof_name (parent_name : string) : string =
-  spec_name parent_name ^ ".proof"
+  ExtractBuiltin.flatten_name [ spec_name parent_name; "proof" ]
+
+(** The names of the conditions [pre] and [post] of [parent_name] *)
+let cond_names (parent_name : string) ~(pre : Pure.fun_decl option)
+    ~(post : Pure.fun_decl option) : (Pure.fun_decl * string) list =
+  let cond suffix (f : Pure.fun_decl option) =
+    Option.map (fun f -> (f, cond_name parent_name suffix)) f
+  in
+  List.filter_map Fun.id [ cond "pre" pre; cond "post" post ]
+
+(** The names of the conditions, spec and proof of [parent] *)
+let generated_names (parent_name : string)
+    ({ pre; post; _ } : HaxSpecs.function_spec) :
+    (Pure.fun_decl * string) list * string * string =
+  ( cond_names parent_name ~pre ~post,
+    spec_name parent_name,
+    proof_name parent_name )
 
 (** Lookup the function a spec is about *)
 let lookup_parent (ctx : ExtractBase.extraction_ctx) (fn : Pure.FunDeclId.id) :
@@ -217,30 +226,78 @@ let add_generated_name (span : Meta.span) (id : ExtractBase.id) (name : string)
   let clash = clash || ExtractBase.ctx_name_is_bound name ctx in
   (ExtractBase.ctx_add span id name ctx, clash)
 
-(** Register the names of the conditions and of the spec. Must be called after
-    registering the crate items. Also return whether one of them clashes. *)
-let register_spec_names (ctx : ExtractBase.extraction_ctx)
-    (spec_id : Spec.SpecId.id) (s : HaxSpecs.spec) :
+(** Register the names of conditions, under the ids of their fns *)
+let register_conds span (conds : (Pure.fun_decl * string) list)
+    (acc : ExtractBase.extraction_ctx * bool) :
     ExtractBase.extraction_ctx * bool =
+  List.fold_left
+    (fun acc ((f : Pure.fun_decl), name) ->
+      add_generated_name span (FunId (FromLlbc (FunId f.def_id, None))) name acc)
+    acc conds
+
+(** Warn that the contract of an untranslated item is dropped. We use the span
+    of the LLBC item [item_meta], if found, and [opt_span] otherwise. *)
+let warn_untranslated (ctx : ExtractBase.extraction_ctx) opt_span
+    (item_meta : Types.item_meta option) (kind : string) (id : string) =
+  let span, name =
+    match item_meta with
+    | Some m -> (Some m.span, TranslateCore.name_to_string ctx.trans_ctx m.name)
+    | None -> (opt_span, id)
+  in
+  [%warn_opt_span] span
+    (Printf.sprintf
+       "hax-specs: dropping the contract of %s `%s`: the %s was not translated"
+       kind name kind)
+
+(** Register the names of the conditions and of the spec. Must be called after
+    registering the crate items. Also return whether one of them clashes. Warns
+    about the specs of untranslated items: {!emit_spec} skips them. *)
+let register_spec_names (ctx : ExtractBase.extraction_ctx)
+    (spec_id : Spec.SpecId.id) (s : HaxSpecs.spec) (opt_span : Meta.span option)
+    : ExtractBase.extraction_ctx * bool =
   match s with
   | FunctionSpec fspec -> (
       match lookup_parent ctx fspec.fn with
-      | None -> (ctx, false)
+      | None ->
+          warn_untranslated ctx opt_span
+            (Option.map
+               (fun (f : LlbcAst.fun_decl) -> f.item_meta)
+               (Pure.FunDeclId.Map.find_opt fspec.fn
+                  ctx.trans_ctx.crate.fun_decls))
+            "function"
+            (Pure.FunDeclId.to_string fspec.fn);
+          (ctx, false)
       | Some parent ->
           let span = parent.item_meta.span in
-          let parent_name = registered_fun_name ctx parent in
-          let add_cond suffix (f : Pure.fun_decl option) acc =
-            match f with
-            | None -> acc
-            | Some f ->
-                add_generated_name span
-                  (FunId (FromLlbc (FunId f.def_id, None)))
-                  (cond_name ctx parent parent_name suffix)
-                  acc
+          let conds, spec, _ =
+            generated_names (registered_fun_name ctx parent) fspec
           in
-          (ctx, false) |> add_cond "pre" fspec.pre |> add_cond "post" fspec.post
-          |> add_generated_name span (SpecId spec_id) (spec_name parent_name))
-  | TraitSpec _ -> (* Not produced yet *) (ctx, false)
+          (ctx, false) |> register_conds span conds
+          |> add_generated_name span (SpecId spec_id) spec)
+  | TraitSpec { trait_decl; methods } -> (
+      match Pure.TraitDeclId.Map.find_opt trait_decl ctx.trans_trait_decls with
+      | None ->
+          warn_untranslated ctx opt_span
+            (Option.map
+               (fun (d : LlbcAst.trait_decl) -> d.item_meta)
+               (Pure.TraitDeclId.Map.find_opt trait_decl
+                  ctx.trans_ctx.crate.trait_decls))
+            "trait"
+            (Pure.TraitDeclId.to_string trait_decl);
+          (ctx, false)
+      | Some d ->
+          let span = d.item_meta.span in
+          let get id = ExtractBase.ctx_get_raw (Some span) id ctx in
+          let trait_name = get (TraitDeclId trait_decl) in
+          List.fold_left
+            (fun acc ({ method_id; pre; post } : HaxSpecs.method_spec) ->
+              let method_name = get (TraitMethodId (trait_decl, method_id)) in
+              register_conds span
+                (cond_names
+                   (ExtractBuiltin.flatten_name [ trait_name; method_name ])
+                   ~pre ~post)
+                acc)
+            (ctx, false) methods)
 
 (** Same as {!register_spec_names}, for a proof obligation *)
 let register_obligation_names (ctx : ExtractBase.extraction_ctx)
@@ -306,16 +363,12 @@ let emit_statement ctx fmt span (fn : Pure.FunDeclId.id) generics output_ty
               | Some post_fn -> emit_holds (arg_texprs @ [ res_texpr ]) post_fn)))
 
 (** Emit one [Spec.spec] entry *)
-let emit_spec ctx fmt (s : HaxSpecs.spec) opt_span =
+let emit_spec ctx fmt (s : HaxSpecs.spec) =
   let open ExtractBase in
   match s with
   | FunctionSpec { fn; pre; post } -> (
       match Pure.FunDeclId.Map.find_opt fn ctx.trans_funs with
-      | None ->
-          [%warn_opt_span] opt_span
-            ("Trying to print a spec for an unknown function '"
-            ^ Pure.FunDeclId.to_string fn
-            ^ "'")
+      | None -> (* Reported by [register_spec_names] *) ()
       | Some ft ->
           (* Register the pre/post conditions in the (local) context *)
           let reg f_opt ctx =
@@ -389,7 +442,18 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) opt_span =
           F.pp_close_box fmt ();
           (* outer vbox *)
           F.pp_print_cut fmt ())
-  | TraitSpec _ -> (* Not produced yet *) ()
+  | TraitSpec { trait_decl; _ }
+    when not (Pure.TraitDeclId.Map.mem trait_decl ctx.trans_trait_decls) ->
+      (* Reported by [register_spec_names] *) ()
+  | TraitSpec { methods; _ } ->
+      (* The conditions of the annotated methods *)
+      if methods <> [] then (
+        (* Blank line before the entry. *)
+        F.pp_print_break fmt 0 0;
+        List.iter
+          (fun ({ pre; post; _ } : HaxSpecs.method_spec) ->
+            emit_conditions ctx fmt ~pre ~post)
+          methods)
 
 (** Emit one [HaxSpecs.obligation] entry as the proof obligation that discharges
     a spec's statement of correctness:
@@ -398,16 +462,12 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) opt_span =
     ]}
     No attribute is emitted: registering the obligation with [mvcgen] (via
     [@[spec]]) is left to the user, who decides which specs to feed it. *)
-let emit_obligation ctx fmt (o : HaxSpecs.obligation) opt_span =
+let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
   let open ExtractBase in
   match o with
   | FunctionContract { spec = { fn; _ }; proof } -> (
       match Pure.FunDeclId.Map.find_opt fn ctx.trans_funs with
-      | None ->
-          [%warn_opt_span] opt_span
-            ("Trying to print a proof obligation for an unknown function '"
-            ^ Pure.FunDeclId.to_string fn
-            ^ "'")
+      | None -> (* Reported by [register_spec_names] *) ()
       | Some ft ->
           let parent = ft.f in
           let span = parent.item_meta.span in

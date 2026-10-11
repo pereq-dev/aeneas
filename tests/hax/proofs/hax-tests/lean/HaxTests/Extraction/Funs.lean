@@ -873,7 +873,7 @@ def specs.traits.condition_clauses.B.provided.default
   BInst.AInst.a self
 
 /-- [hax_tests::specs::traits::condition_clauses::C::provided_c]:
-    Source: 'src/specs/traits/condition_clauses.rs', lines 28:4-30:5
+    Source: 'src/specs/traits/condition_clauses.rs', lines 27:4-29:5
     Visibility: public -/
 @[trait_default]
 def specs.traits.condition_clauses.C.provided_c.default
@@ -884,7 +884,7 @@ def specs.traits.condition_clauses.C.provided_c.default
   CInst.BInst.AInst.a self
 
 /-- [hax_tests::specs::traits::condition_clauses::H::provided_h]:
-    Source: 'src/specs/traits/condition_clauses.rs', lines 42:4-45:5
+    Source: 'src/specs/traits/condition_clauses.rs', lines 40:4-43:5
     Visibility: public -/
 @[trait_default]
 def specs.traits.condition_clauses.H.provided_h.default
@@ -897,7 +897,7 @@ def specs.traits.condition_clauses.H.provided_h.default
   HInst.h self
 
 /-- [hax_tests::specs::traits::condition_clauses::W::provided_w]:
-    Source: 'src/specs/traits/condition_clauses.rs', lines 58:4-60:5
+    Source: 'src/specs/traits/condition_clauses.rs', lines 55:4-57:5
     Visibility: public -/
 @[trait_default]
 def specs.traits.condition_clauses.W.provided_w.default
@@ -908,14 +908,14 @@ def specs.traits.condition_clauses.W.provided_w.default
   WInst.corecloneCloneInst.clone u
 
 /-- [hax_tests::specs::traits::condition_clauses::{impl hax_tests::specs::traits::condition_clauses::D for u32}::required]:
-    Source: 'src/specs/traits/condition_clauses.rs', lines 74:4-76:5
+    Source: 'src/specs/traits/condition_clauses.rs', lines 70:4-72:5
     Visibility: public -/
 def U32.Insts.Hax_testsSpecsTraitsCondition_clausesD.required
   (self : Std.U32) (x : Std.U32) : RustM Std.U32 := do
   x + 1#u32
 
 /-- Trait implementation: [hax_tests::specs::traits::condition_clauses::{impl hax_tests::specs::traits::condition_clauses::D for u32}]
-    Source: 'src/specs/traits/condition_clauses.rs', lines 73:0-77:1 -/
+    Source: 'src/specs/traits/condition_clauses.rs', lines 69:0-73:1 -/
 @[reducible]
 def U32.Insts.Hax_testsSpecsTraitsCondition_clausesD :
   specs.traits.condition_clauses.D Std.U32 := {

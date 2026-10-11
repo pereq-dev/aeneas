@@ -19,8 +19,7 @@ pub trait B: A {
     }
 }
 
-// A supertrait of a supertrait. The precondition evaluates `self.a()`, which
-// makes the spec provable without knowing anything about `A`'s impls.
+// A supertrait of a supertrait.
 #[hax_lib::attributes]
 pub trait C: B {
     #[requires(self.a() < 100)]
@@ -31,8 +30,7 @@ pub trait C: B {
 }
 
 // The clauses of the method's own generics come first in the conditions, last
-// in the method. The precondition evaluates the calls of the body, which makes
-// the spec provable without knowing anything about the impls.
+// in the method.
 #[hax_lib::attributes]
 pub trait H<T> {
     fn h(&self) -> T;
@@ -46,8 +44,7 @@ pub trait H<T> {
 }
 
 // The conditions have a clause `U: Clone`, which the method reaches through its
-// `Self: W<U>` clause. The precondition evaluates the call of the body, as
-// above.
+// `Self: W<U>` clause.
 #[hax_lib::attributes]
 pub trait W<U>
 where
@@ -61,8 +58,7 @@ where
 }
 
 // Conditions on a required method, which has no default body to check them
-// against: they could only constrain the impls. Currently dropped: no
-// `pre`/`post` is extracted for them.
+// against: they constrain the impls.
 #[hax_lib::attributes]
 pub trait D {
     #[requires(x < 100)]

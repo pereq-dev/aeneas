@@ -7,12 +7,12 @@ module F = Format
 (** Emit one [Spec.spec] entry. *)
 let emit_spec ctx fmt (s : Spec.spec) =
   match s.kind with
-  | HaxSpec hs -> ExtractHaxSpecs.emit_spec ctx fmt hs s.span
+  | HaxSpec hs -> ExtractHaxSpecs.emit_spec ctx fmt hs
 
 (** Emit one [Spec.proof_obligation] entry. *)
 let emit_proof_obligation ctx fmt (o : Spec.proof_obligation) =
   match o.kind with
-  | HaxProof ho -> ExtractHaxSpecs.emit_obligation ctx fmt ho o.span
+  | HaxProof ho -> ExtractHaxSpecs.emit_obligation ctx fmt ho
 
 (** Raised by {!register_names} when a generated name clashes with a name
     registered before: the clashes were already reported. *)
@@ -47,7 +47,8 @@ let register_names (ctx : ExtractBase.extraction_ctx) :
         register "spec"
           (fun ctx ->
             match s.kind with
-            | HaxSpec hs -> ExtractHaxSpecs.register_spec_names ctx s.id hs)
+            | HaxSpec hs ->
+                ExtractHaxSpecs.register_spec_names ctx s.id hs s.span)
           acc)
       (ctx, false) ctx.specs
   in
