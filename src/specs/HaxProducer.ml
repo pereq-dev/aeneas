@@ -366,6 +366,22 @@ let produce (ctx : TranslateCore.trans_ctx)
       local_trait_decls
   in
 
+  (* The methods with a contract, as [(trait, method)] *)
+  let contracts = Hashtbl.create 16 in
+  List.iter
+    (fun (s : Spec.spec) ->
+      match s.kind with
+      | HaxSpec (TraitSpec { trait_decl; methods }) ->
+          List.iter
+            (fun (m : HaxSpecs.method_spec) ->
+              Hashtbl.replace contracts (trait_decl, m.method_id) ())
+            methods
+      | _ -> ())
+    trait_specs;
+  (* Does the method [method_id] of the trait [trait_id] have a contract? *)
+  let has_contract trait_id method_id =
+    Hashtbl.mem contracts (trait_id, method_id)
+  in
   (* Build the spec (statement of correctness) and the proof obligation that
      discharges it, for one parent fn's accumulated [AssociatedItem]s. *)
   let build_entry (parent_id, a) : (Spec.spec * Spec.proof_obligation) option =
@@ -375,6 +391,18 @@ let produce (ctx : TranslateCore.trans_ctx)
       [%ltrace
         Printf.sprintf "hax-specs:   fn=%s pre=%s post=%s"
           (parent_name ctx a.parent) (shape pre) (shape post)];
+      (* The contract of a trait impl method is checked against its body by its
+         own spec, the trait-level one by the Lawful obligation of the impl:
+         nothing relates them *)
+      (match a.parent with
+      | Fun { src = TraitImplFun (_, trait_ref, method_id, _); _ }
+        when has_contract trait_ref.id method_id ->
+          [%lwarning
+            Printf.sprintf
+              "hax-specs: the contract of `%s` is checked as a standalone spec \
+               only; it is independent of the trait-level contract"
+              (parent_name ctx a.parent)]
+      | _ -> ());
       let span = Some (parent_span a.parent) in
       (* One [function_spec] payload, shared between the spec and the proof
          obligation that discharges it. *)

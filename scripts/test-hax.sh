@@ -165,10 +165,11 @@ extract() {
         fi
         log="$crate/proofs/$failure_scenario/lean/aeneas-error.log"
         [ -f "$log" ] || { echo "error: ${crate#"$root/"} failed before running aeneas" >&2; exit 1; }
-        # Without colors, timings, OCaml backtraces (their line numbers change
-        # with any edit) and the machine-specific paths.
+        # Without colors, timings, item ids and OCaml backtraces (they change
+        # with any edit of the crate or of aeneas) and the machine-specific
+        # paths.
         sed -e $'s/\x1b\\[[0-9;]*m//g' -e "s|$crate/||g" -e '/^\[Info *\] Total execution time:/d' \
-            -e '/^Raised at /d' -e '/^Called from /d' \
+            -e '/^Raised at /d' -e '/^Called from /d' -e 's/ (id: [0-9]*)//g' \
             "$log" > "$tests/failures/$name.out"
         echo "$(rel "$crate") failed as expected: its error is in $(rel "$tests/failures/$name.out")"
     done
