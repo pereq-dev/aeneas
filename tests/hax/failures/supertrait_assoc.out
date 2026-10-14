@@ -3,4 +3,4 @@
 [Info ] Generated: proofs/failure/lean/Failure/Extraction/FunsExternal_Template.lean
 [Info ] Generated: proofs/failure/lean/Failure/Extraction/Funs.lean
 [Error] A pre/post condition does not have the same type and const generic parameters as its function (e.g. a supertrait of the method's trait has associated types)
-Source: 'src/lib.rs', lines 15:4-17:5
+Source: 'src/lib.rs', lines 13:0-18:1
