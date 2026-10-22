@@ -20,7 +20,16 @@ items of `core`, `alloc` and `std` are taken from the external
 - `compute_allocator_filter` drops the type parameters and trait clauses that
   Charon's `hide_allocator` pass leaves dangling, for non-local `core`/`alloc`/
   `std` items only: local items are declared by us, so their uses must keep all
-  generics (#75).
+  generics (#75);
+- `ExternalNames.core_models_mut_regions_overrides` declares the region of
+  `core::fmt::Formatter<'a>` as not mutable, matching its region-free model in
+  `CoreModels`. Without the builtin type map, the `mut_regions` of opaque types
+  come from Charon's analysis of the real definitions; `Formatter` stores a
+  `&'a mut dyn Write`, so every `Debug`/`Display` impl taking a
+  `&mut Formatter<'_>` would fail with an `Unreachable` in
+  `SymbolicToPureValues` (AeneasVerif/aeneas#1473, cryspen/hax#2141).
+  `TypesAnalysis` looks the override up under the flag when a type has no
+  entry in the external type map.
 
 ## Invariants
 
@@ -32,6 +41,8 @@ items of `core`, `alloc` and `std` are taken from the external
   backend-independent globals of `builtin_globals` (the integer `MIN`, `MAX`
   and `BITS` constants, `UNIT_METADATA`) stay active.
 - The allocator filter never applies to local items.
+- Under the flag, `mut_regions` differ from Charon's analysis only for the
+  types listed in `core_models_mut_regions_overrides`.
 - With the default `-use-lean-modules`, `CoreModels` must be a Lean module:
   generated files are modules and `public import CoreModels`.
 
@@ -50,6 +61,10 @@ items of `core`, `alloc` and `std` are taken from the external
   builtin globals `core.num.U32.MAX`/`core.num.Usize.BITS`: if the integer
   `MIN`/`MAX`/`BITS` globals were disabled under the flag, they would become
   monadic reads of unknown globals (checked on 2026-11-02).
+  Also a `Display` impl (`Name`) calling `Formatter::write_str`, for the
+  `mut_regions` override.
+- The override shifts lines of `TypesAnalysis.ml`, which the expected outputs
+  `tests/src/higher_ranked_implied_bounds_*.lean.out` embed.
 
 ## Rebase notes
 
@@ -68,6 +83,9 @@ items of `core`, `alloc` and `std` are taken from the external
   `CoreModels` uses `Type`. Lean solves the `_` to `Type` from the uses of
   `CoreModels` items, so the generated code stays compatible; only the
   expected output changes.
+- Drop `core_models_mut_regions_overrides` once AeneasVerif/aeneas#1473 is
+  fixed *and* `CoreModels` models the overridden types with their regions and
+  the signatures of Rust core.
 
 ## History
 
@@ -78,3 +96,4 @@ items of `core`, `alloc` and `std` are taken from the external
   check (#1404); test for promoted constants added.
 - 2026-11-02: test for constants (local and builtin) under the flag, against
   the charon consts rework (upstream #1471, #1496).
+- 2026-11-26: `mut_regions` override for `Formatter` (fork PR #90).
