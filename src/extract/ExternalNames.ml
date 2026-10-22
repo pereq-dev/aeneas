@@ -565,6 +565,24 @@ let mk_external_types_keep_params_map () =
 let external_types_keep_params_map =
   mk_memoized mk_external_types_keep_params_map
 
+(** Overrides of the [mut_regions] of opaque types under [-core-models-lib],
+    where Charon's analysis of the real definitions otherwise applies. Only used
+    by [TypesAnalysis].
+
+    [core::fmt::Formatter<'a>] stores a [&'a mut dyn Write], so ['a] is mutable,
+    which Aeneas fails on (https://github.com/AeneasVerif/aeneas/issues/1473).
+    [core_models] models [Formatter] without a region, so we declare ['a] as not
+    mutable. This can be removed once that issue is fixed *and* [core_models]
+    gives [Formatter] its region, with the signatures of Rust core. *)
+let mk_core_models_mut_regions_overrides () =
+  NameMatcherMap.of_list
+    (List.map
+       (fun (info : Pure.external_type_info) -> (info.rust_name, info))
+       [ mk_type "core::fmt::Formatter" "core.fmt.Formatter" ~mut_regions:[] ])
+
+let core_models_mut_regions_overrides =
+  mk_memoized mk_core_models_mut_regions_overrides
+
 (** All the external trait declarations, ordered by increasing precedence. *)
 let external_trait_decls : unit -> Pure.external_trait_decl_info list =
   mk_memoized (fun () -> merge_sources (fun source -> source.trait_decls))

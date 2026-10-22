@@ -83,3 +83,13 @@ pub fn promoted_slice() -> u32 {
     let s: &[u32] = &[1, 2];
     s[0]
 }
+
+/// `&mut Formatter` gets no backward function, matching the region-free
+/// `Formatter` of `core_models`.
+pub struct Name;
+
+impl core::fmt::Display for Name {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("Name")
+    }
+}
