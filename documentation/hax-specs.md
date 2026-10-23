@@ -2,10 +2,11 @@
 
 ## High-level documentation
 
-When Aeneas is invoked with `-specs hax` (Lean backend only) it reads the
-contracts written with [`hax_lib`](https://github.com/cryspen/hax) annotations
-in the Rust code and emits them as Lean statements of correctness, together with
-the proof obligations stating that the code meets them.
+When Aeneas is invoked with `-specs hax` (Lean backend only, together with
+`-core-models-lib`) it reads the contracts written with
+[`hax_lib`](https://github.com/cryspen/hax) annotations in the Rust code and
+emits them as Lean statements of correctness, together with the proof
+obligations stating that the code meets them.
 
 ### Overview
 
@@ -16,7 +17,9 @@ There are several kinds of rust-written specs:
   statement of correctness `<fn>.spec`, and the obligation `<fn>.spec.proof`
 * *Trait level specs*: every local trait gets a *companion* structure
   `<Trait>.Lawful` that registers the specifications attached to its methods.
-  Every implementation generates a corresponding obligation of lawfulness.
+  Every local implementation, including derived impls and the impls of foreign
+  traits (e.g. `Clone`, or the `Fn*` impls of closures), generates a
+  corresponding obligation of lawfulness.
     * If no annotation is written, the companion structure has no method field
       (the parent fields remain).
     * `#[requires(..)]` / `#[ensures(\|res\|..)]` on the methods of trait
@@ -136,7 +139,7 @@ theorem U8.Insts.Hax_testsSpecsTraitsSupertraitsB.Lawful :
 
 One Lawful field per parent clause `<P>InstLawful : P.Lawful …
 <X>Inst.<P>Inst`, one spec per annotated method `<m>_spec`. A trait with no
-annotated method and no parent still gets an empty structure. Each
+annotated method and no parent still gets an empty structure. Each local
 implementation gets a corresponding proof obligation.
 
 #### Foreign traits
@@ -150,9 +153,11 @@ following the same conventions.
 
 ### Diagnostics
 
-All messages start with `hax-specs:`. Warnings marked *(span)* point at the Rust
-source when it is known and become errors with `-warnings-as-errors`; the others
-are logged at warning level.
+The warnings below start with `hax-specs:`. Those marked *(span)* point at the
+Rust source when it is known; with `-warnings-as-errors` they become errors:
+the item is still dropped and the extraction continues, but Aeneas exits with
+code 1. The others are logged at warning level (shown by `cargo hax extract
+-v`).
 
 *  ``multiple #[requires] on `f`; ignoring extras`` (or `#[ensures]`) : More
    than one condition of a kind on an item: the first one is used.
@@ -161,9 +166,19 @@ are logged at warning level.
 * ``argument count mismatch for `f.pre` (takes N, expected M); dropping this
   condition`` : The condition does not take the arguments of the function (plus
   the result, for a post).
-* ``dropping the contract of trait method `m`: its #[requires] is invalid`` (or
-  `#[ensures]`) *(span)* : A condition of a trait method was dropped: the whole
-  method contract is dropped.
+* ``dropping the contract of trait method `m`: <reason>`` *(span)* : the whole
+  contract of the trait method is dropped (its `<m>_spec` field is not
+  generated). The reasons:
+  * `its #[requires] is invalid` (or `#[ensures]`): one of its conditions was
+    dropped (see above);
+  * `the generics of its conditions don't match those of the trait and the
+    method`: only `#[requires]` is written, and the postcondition cannot be
+    synthesized (see [Limitations](#limitations));
+  * `trait instances in its output type are not supported yet`: only
+    `#[requires]` is written, and the output type of the method mentions a trait
+    instance;
+  * `a missing condition could not be synthesized`: an error was reported while
+    synthesizing it.
 * ``the contract of `m` is checked as a standalone spec only; it is independent
   of the trait-level contract`` Contract on a method of a trait impl, whose
   trait method has a contract too.
@@ -173,9 +188,22 @@ are logged at warning level.
   of a dropped contract`` A decoration that was not used (e.g. `decreases`, an
   extra or dropped condition).
 * ``dropping the contract of function `f`: the function was not translated``
-  *(span)* The annotated function failed to translate. Same for a trait (``the
-  contract of trait `X` ``) and a trait impl (``the Lawful obligation of trait
-  impl `I` ``).
+  *(span)* The annotated function failed to translate. Same for a trait
+  (``dropping the contract of trait `X`: the trait was not translated``) and a
+  trait impl (``dropping the Lawful obligation of trait impl `I`: the trait impl
+  was not translated``).
+* ``dropping the Lawful obligation of an impl of trait `X`: the trait was not
+  translated`` *(span)* The impl was translated, but not the trait it
+  implements.
+
+If a spec or an obligation fails to extract, the error is reported and only that
+entry is skipped; Aeneas exits with code 1. The entries that refer to it (the
+obligation of a skipped spec; the `<impl>.Lawful` obligations, Lawful binders
+and parent fields that mention a skipped `<Trait>.Lawful`) are still generated,
+so the generated files do not compile until the error is fixed.
+
+Command-line errors: `The -specs option is valid only for the Lean backend`,
+and `The -specs hax option requires the -core-models-lib option`.
 
 Name clashes between the generated names (`.pre`, `.post`, `.spec`,
 `.spec.proof`, `.Lawful`) and the names of the crate items are errors (`Name
@@ -199,12 +227,43 @@ fields); the check is case-sensitive (a method `lawful` is fine).
   (`BuiltinOrAuto`, e.g. `Clone` for a tuple) is printed as `BuiltinClone …`,
   not as a `CoreModels` instance, so no `Lawful` theorem exists for it (e.g. to
   fill the `Clone` parent field of an impl of `Dup: Clone` for a tuple).
-- **Dropped trait-method contracts** (with a warning, see
-  [Diagnostics](#diagnostics)): when the generics of the conditions match those
-  of the trait and the method ambiguously (e.g. a supertrait with an associated
-  type, plus several method type parameters with the same bound that no input
-  distinguishes), and when a postcondition must be synthesized for a method
-  whose output type mentions a trait instance.
+- **Trait methods and associated types.** Charon lifts the associated types of
+  a trait to type parameters, but not the same way in the trait and in the
+  decoration functions of its conditions: once per clause path in the latter
+  (`Clause0_Item`, `Clause1_Clause0_Item`, …), and after the type parameters of
+  the method. Aeneas maps the generics of the conditions to those of the trait
+  and the method by position, so:
+  - the contract is dropped with a warning (`the generics of its conditions
+    don't match those of the trait and the method`) when a supertrait has an
+    associated type (e.g. `trait SubAssoc: Assoc`, or `trait Call<Args>:
+    CallOnce<Args>` with `type Output` in `CallOnce`);
+  - extraction fails (exit code 1; `<Trait>.Lawful` and its conditions are
+    not generated) when the trait has an associated type and the method a
+    type parameter (`Could not find an instance for a trait clause of a
+    pre/post condition`).
+
+  The cases are in `tests/hax/src/specs/traits/synthesized.rs` (the failing
+  one is commented out).
+- **Compile with `--cfg hax_backend_lean`.** `cargo hax` sets it. Without it,
+  `hax_lib` encodes the decoration functions for hax's legacy engine: the
+  future values of `&mut` arguments come before the result in a postcondition
+  (Aeneas expects them after it), and a function without arguments gets
+  conditions with a unit argument. The second is detected: Aeneas drops these
+  conditions (e.g. ``argument count mismatch for `f.pre` (takes 1, expected 0);
+  dropping this condition``). The first is not: the postcondition may silently
+  refer to the wrong values.
+- **Associated constants** are not covered by `<Trait>.Lawful`: nothing says
+  that reading one does not fail, so the spec of a generic function that reads
+  `T::C` outside of its conditions may not be provable.
+- **Recursive associated-type bounds** (`type Item: Foo` in `trait Foo`) are
+  not supported: Charon cannot lift them, and Lean rejects the generated trait
+  structure.
+- **`dyn Trait`** is out of scope: a `dyn Trait` argument gets no Lawful
+  hypothesis in the spec of the function (and Aeneas does not translate calls
+  through `dyn` yet).
+- **Mutually recursive methods** of an impl need one joint proof: the
+  obligation is a single `<impl>.Lawful` theorem, so prove the methods together
+  in a separate lemma and use it for each field.
 
 ### Proving the obligations
 
