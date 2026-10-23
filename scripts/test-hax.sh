@@ -147,30 +147,33 @@ extract() {
 
     resolve_hax_lib "$tests"
     step "Extracting $(rel "$tests") (scenario $scenario)"
-    (cd "$tests" && cargo hax extract "$scenario")
+    (cd "$tests" && cargo hax extract -v "$scenario")
 
-    local crate name log
+    local crate name out
     for crate in "$tests"/failures/*/; do
         crate="${crate%/}"
         name="$(basename "$crate")"
         resolve_hax_lib "$crate"
-        # A log left by a previous run would hide a failure before aeneas.
+        # Start from a clean output directory, without the files of a previous run.
         rm -rf "$crate/proofs"
+        mkdir -p "$crate/proofs"
+        out="$crate/proofs/cargo-hax.log"
         step "Extracting $(rel "$crate"), which must fail: the errors below are expected"
         # Shares the build directory of `tests/hax`, so that the dependencies
-        # are built once.
-        if (cd "$crate" && CARGO_TARGET_DIR="$tests/target" cargo hax extract "$failure_scenario"); then
+        # are built once. `-v`: the output of aeneas is not truncated (hax
+        # writes `aeneas-error.log` only when it is).
+        if (cd "$crate" && CARGO_TARGET_DIR="$tests/target" cargo hax extract -v "$failure_scenario") 2>&1 | tee "$out"; then
             echo "error: the extraction of ${crate#"$root/"} succeeded, but must fail" >&2
             exit 1
         fi
-        log="$crate/proofs/$failure_scenario/lean/aeneas-error.log"
-        [ -f "$log" ] || { echo "error: ${crate#"$root/"} failed before running aeneas" >&2; exit 1; }
-        # Without colors, timings, item ids and OCaml backtraces (they change
-        # with any edit of the crate or of aeneas) and the machine-specific
-        # paths.
-        sed -e $'s/\x1b\\[[0-9;]*m//g' -e "s|$crate/||g" -e '/^\[Info *\] Total execution time:/d' \
-            -e '/^Raised at /d' -e '/^Called from /d' -e 's/ (id: [0-9]*)//g' \
-            "$log" > "$tests/failures/$name.out"
+        grep -q '^ *aeneas > ' "$out" || { echo "error: ${crate#"$root/"} failed before running aeneas" >&2; exit 1; }
+        # The lines of aeneas (prefixed with `aeneas > ` by hax), without colors,
+        # timings, item ids and OCaml backtraces (they change with any edit of
+        # the crate or of aeneas) and the machine-specific paths.
+        sed -n -e 's/^ *aeneas > //p' "$out" \
+            | sed -e $'s/\x1b\\[[0-9;]*m//g' -e "s|$crate/||g" -e '/^\[Info *\] Total execution time:/d' \
+                -e '/^Raised at /d' -e '/^Called from /d' -e 's/ (id: [0-9]*)//g' \
+            > "$tests/failures/$name.out"
         echo "$(rel "$crate") failed as expected: its error is in $(rel "$tests/failures/$name.out")"
     done
 
