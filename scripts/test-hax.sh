@@ -81,26 +81,30 @@ EOF
     resolve_hax_lib "$hax" "$tests"
     (cd "$tests" && cargo hax extract -v "$scenario")
 
-    local crate name log
+    local crate name out
     for crate in "$tests"/failures/*/; do
         crate="${crate%/}"
         name="$(basename "$crate")"
         resolve_hax_lib "$hax" "$crate"
-        # A log left by a previous run would hide a failure before aeneas.
+        # The output of a previous run would hide a failure before aeneas.
         rm -rf "$crate/proofs"
+        mkdir -p "$crate/proofs"
+        out="$crate/proofs/cargo-hax.log"
         # Shares the build directory of `tests/hax`, so that the dependencies
-        # are built once.
-        if (cd "$crate" && CARGO_TARGET_DIR="$tests/target" cargo hax extract "$failure_scenario"); then
+        # are built once. `-v`: the output of aeneas is not truncated (hax
+        # writes `aeneas-error.log` only when it is).
+        if (cd "$crate" && CARGO_TARGET_DIR="$tests/target" cargo hax extract -v "$failure_scenario") 2>&1 | tee "$out"; then
             echo "error: the extraction of ${crate#"$root/"} succeeded, but must fail" >&2
             exit 1
         fi
-        log="$crate/proofs/$failure_scenario/lean/aeneas-error.log"
-        [ -f "$log" ] || { echo "error: ${crate#"$root/"} failed before running aeneas" >&2; exit 1; }
-        # Without colors, timings, OCaml backtraces (their line numbers change
-        # with any edit) and the machine-specific paths.
-        sed -e $'s/\x1b\\[[0-9;]*m//g' -e "s|$crate/||g" -e '/^\[Info *\] Total execution time:/d' \
-            -e '/^Raised at /d' -e '/^Called from /d' \
-            "$log" > "$tests/failures/$name.out"
+        grep -q '^ *aeneas > ' "$out" || { echo "error: ${crate#"$root/"} failed before running aeneas" >&2; exit 1; }
+        # The lines of aeneas (prefixed with `aeneas > ` by hax), without colors,
+        # timings, OCaml backtraces (their line numbers change with any edit)
+        # and the machine-specific paths.
+        sed -n -e 's/^ *aeneas > //p' "$out" \
+            | sed -e $'s/\x1b\\[[0-9;]*m//g' -e "s|$crate/||g" -e '/^\[Info *\] Total execution time:/d' \
+                -e '/^Raised at /d' -e '/^Called from /d' \
+            > "$tests/failures/$name.out"
     done
 }
 
