@@ -79,7 +79,7 @@ hax-lib = { path = "$hax/hax-lib" }
 EOF
 
     resolve_hax_lib "$hax" "$tests"
-    (cd "$tests" && cargo hax extract "$scenario")
+    (cd "$tests" && cargo hax extract -v "$scenario")
 
     local crate name log
     for crate in "$tests"/failures/*/; do
