@@ -30,7 +30,8 @@ are consumed by the producer.
   transitive parent clauses (`cond_generics`, #80): hax-lib (up to 0.5.0) adds
   the supertraits of the trait as bounds of the conditions. Not supported: a
   supertrait with associated types, which Charon turns into type parameters of
-  the conditions that the method does not have (an error).
+  the conditions that the method does not have (an error). Superseded by
+  `hax-trait-specs`: the contract of such a method is dropped with a warning.
 - Conditions on a required trait method (no default body) are dropped,
   without a warning: no `pre`/`post`/spec/obligation is extracted for them.
   Superseded by `hax-trait-specs`: the contracts of all the trait methods
@@ -80,7 +81,8 @@ are consumed by the producer.
   and records the error of Aeneas in `tests/hax/failures/<crate>.out`
   (committed).
 - `tests/hax/failures/supertrait_assoc`: conditions of a method of a trait
-  whose supertrait has an associated type, which is an error (#80).
+  whose supertrait has an associated type, which is an error (#80). Removed by
+  `hax-trait-specs`, where the contract is dropped with a warning instead.
 - Not run by `make test`: `make test-hax` (`scripts/test-hax.sh`; `extract-hax`
   and `verify-hax` run the two steps). By default it uses the release of hax
   that the crates require: the `hax-lib` they resolve to, the `cargo-hax` of

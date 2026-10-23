@@ -72,5 +72,5 @@ impl D for u32 {
     }
 }
 
-// Not supported yet: a supertrait with associated types (known failure
-// `tests/hax/failures/supertrait_assoc`).
+// Not supported yet: a supertrait with associated types; the contract of the
+// method is dropped with a warning (`synthesized.rs`, e.g. `SubPost`).
