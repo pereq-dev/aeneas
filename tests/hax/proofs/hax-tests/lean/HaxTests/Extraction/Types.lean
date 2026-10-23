@@ -154,6 +154,12 @@ structure specs.traits.assoc_type_bounds.One where
 @[reducible]
 def specs.traits.assoc_type_bounds.Box1 (T : Type _) := T
 
+/-- Trait declaration: [hax_tests::specs::traits::assoc_type_bounds::Source]
+    Source: 'src/specs/traits/assoc_type_bounds.rs', lines 57:0-62:1 -/
+structure specs.traits.assoc_type_bounds.Source (Self : Type _) (Self_Item :
+  Type _) where
+  get : Self → RustM Self_Item
+
 /-- Trait declaration: [hax_tests::specs::traits::basic::Foo]
     Source: 'src/specs/traits/basic.rs', lines 7:0-20:1 -/
 structure specs.traits.basic.Foo (Self : Type _) where
@@ -230,6 +236,11 @@ structure specs.traits.condition_clauses.W (Self : Type _) (U : Type _) where
 structure specs.traits.condition_clauses.D (Self : Type _) where
   required : Self → Std.U32 → RustM Std.U32
 
+/-- Trait declaration: [hax_tests::specs::traits::const_generics::Cg]
+    Source: 'src/specs/traits/const_generics.rs', lines 8:0-12:1 -/
+structure specs.traits.const_generics.Cg (Self : Type _) (N : Std.Usize) where
+  f : Self → Std.Usize → RustM Std.Usize
+
 /-- Trait declaration: [hax_tests::specs::traits::default_methods::D]
     Source: 'src/specs/traits/default_methods.rs', lines 7:0-15:1 -/
 structure specs.traits.default_methods.D (Self : Type _) where
@@ -302,6 +313,23 @@ structure specs.traits.minimal.Foo (Self : Type _) where
   f : Self → Std.U32 → RustM Std.U32
   g : Self → RustM Std.U32
   h : Self → Std.U32 → RustM Std.U32
+
+/-- Trait declaration: [hax_tests::specs::traits::modules::a::b::T]
+    Source: 'src/specs/traits/modules.rs', lines 9:8-12:9
+    Visibility: public -/
+structure specs.traits.modules.a.b.T (Self : Type _) where
+  t : Self → RustM Std.U32
+
+/-- [hax_tests::specs::traits::modules::c::S]
+    Source: 'src/specs/traits/modules.rs', lines 17:4-17:17
+    Visibility: public -/
+@[reducible]
+def specs.traits.modules.c.S := Unit
+
+/-- [hax_tests::specs::traits::modules::W]
+    Source: 'src/specs/traits/modules.rs', lines 33:0-33:15 -/
+@[reducible]
+def specs.traits.modules.W (U : Type _) := U
 
 /-- Trait declaration: [hax_tests::specs::traits::mut_self::Counter]
     Source: 'src/specs/traits/mut_self.rs', lines 6:0-12:1 -/
@@ -430,7 +458,7 @@ structure specs.traits.synthesized.Sym2 (Self : Type _) (Self_Clause0_X :
     specs.traits.synthesized.K2 U Clause0_X), Std.U32 → RustM Std.U32
 
 /-- Trait declaration: [hax_tests::specs::traits::trait_generics::Conv]
-    Source: 'src/specs/traits/trait_generics.rs', lines 6:0-9:1 -/
+    Source: 'src/specs/traits/trait_generics.rs', lines 7:0-10:1 -/
 structure specs.traits.trait_generics.Conv (Self : Type _) (T : Type _) where
   conv : Self → T → RustM Std.U32
 
