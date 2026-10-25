@@ -71,8 +71,8 @@ structure, diagnostics, limitations, proof recipes).
   contracts and synthesized conditions (the unsupported cases are commented
   out in `synthesized.rs`).
 - `tests/hax/proofs/hax-tests/lean/HaxTests/Verification/Traits/`: proofs of
-  the trait-level obligations; `Verification/Lemmas.lean` holds the
-  `RustM.holds_bool` simp lemma they use.
+  the trait-level obligations. They use the `triple_prop_*` lemmas of
+  `mvcgen-result-specs` on `.holds`.
 - `tests/hax/src/specs/arguments.rs` (`UnitArg`, `UnnamedArg`): a unit
   argument and an unnamed argument (`_: u32`) of a trait method.
 - `tests/hax/src/specs/contracts.rs` (`with_closure`): a closure in a function
@@ -89,8 +89,9 @@ structure, diagnostics, limitations, proof recipes).
 
 ## Rebase notes
 
-- Depends on `hax-specs`, `core-models-lib` and
-  `trait-field-constructor-clash` (`check_trait_field_clash`).
+- Depends on `hax-specs`, `core-models-lib`,
+  `trait-field-constructor-clash` (`check_trait_field_clash`) and, for the
+  proofs of the tests, `mvcgen-result-specs` (`triple_prop_*`).
 - The `tests/hax` outputs are produced by `cargo hax extract`: re-extract them
   with `make extract-hax` and re-check the proofs with
   `make verify-hax` (see `hax-specs`).
@@ -112,6 +113,8 @@ structure, diagnostics, limitations, proof recipes).
 - 2026-10-25: escaped Lawful binder names.
 - 2026-10-25: the Lawful field clash check reuses `check_trait_field_clash`
   (`trait-field-constructor-clash`).
+- 2026-10-25: the `RustM.holds` lemmas of `Verification/Lemmas.lean` moved to
+  the library (`mvcgen-result-specs`).
 - 2026-11-04: rebased on the 2026-11-02 dev; since upstream's move to
   OCaml 5.4+ (`Format` measures strings in code points), the buffer
   formatter of `ExtractSpec.skip_on_failure` measures them in bytes with

@@ -349,11 +349,16 @@ theorem …Wrapper.Insts.Hax_testsSpecsTraitsGeneric_implFoo.Lawful {T : Type}
 goal of a field into the Aeneas `spec` form, so that `step*` can be used.
 
 **`.holds` of `RustM Bool` conditions.** A trait-method condition used as a
-proposition appears as `((fun a => a = true) <$> x).holds`, which neither Aeneas
-nor Hax simplifies yet. The test suite proves a simp lemma for it in
-`HaxTests/Verification/Lemmas.lean`:
+proposition appears as `((fun a => a = true) <$> x).holds`, i.e. the triple
+`⦃ ⌜ True ⌝ ⦄ (· = true) <$> x ⦃ ⇓ p => ⌜ p ⌝ ⦄`. The Aeneas library
+(`Aeneas/Std/WP.lean`) has a simp lemma for it:
 
 ```lean
-@[simp] theorem Aeneas.Std.RustM.holds_bool (x : RustM Bool) :
-    ((fun a => a = true) <$> x : RustM Prop).holds ↔ x = ok true
+@[simp] theorem Aeneas.Std.triple_prop_map_eq_true_iff (x : RustM Bool) :
+    ⦃ ⌜ True ⌝ ⦄ ((· = true) <$> x : RustM Prop) ⦃ ⇓ p => ⌜ p ⌝ ⦄ ↔ x = .ok true
 ```
+
+Two more lemmas there handle the other `.holds` shapes, and you pass them
+explicitly: `triple_prop_bind_iff` (`.holds` of `x >>= f` iff `x = .ok a` and
+`(f a).holds` for some `a`) and `triple_prop_pure_iff` (`(pure p).holds ↔ p`,
+not `@[simp]` because it changes how `simp_all` normalizes hypotheses).
