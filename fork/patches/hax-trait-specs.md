@@ -39,6 +39,11 @@ structure, diagnostics, limitations, proof recipes).
   under `-warnings-as-errors`); the extraction continues. Each entry of
   `Specs.lean`/`ProofObligations.lean` is printed only if it extracts: a
   dropped entry leaves no partial output.
+- Unit arguments are passed as `()` and bound as `_`, in the specs and in the
+  `Lawful` fields.
+- An argument of a trait method that is not a variable in its precondition
+  (e.g. `_`) is named after its type in its `Lawful` field, as in the
+  functions with a body.
 
 ## Tests
 
@@ -52,6 +57,8 @@ structure, diagnostics, limitations, proof recipes).
 - `tests/hax/proofs/hax-tests/lean/HaxTests/Verification/Traits/`: proofs of
   the trait-level obligations; `Verification/Lemmas.lean` holds the
   `RustM.holds_bool` simp lemma they use.
+- `tests/hax/src/specs/arguments.rs` (`UnitArg`, `UnnamedArg`): a unit
+  argument and an unnamed argument (`_: u32`) of a trait method.
 - `tests/src/hax-specs-no-core-models-lib.rs`: the `-specs hax` flag check.
 
 ## Rebase notes
@@ -65,3 +72,6 @@ structure, diagnostics, limitations, proof recipes).
 
 - 2026-10-23: bootstrapped from fork PR #85, rebased on the 2026-10-20 fork;
   `tests/hax/src/specs.rs` keeps `hax-specs`'s `mutual` module.
+- 2026-10-25: unit arguments of the trait methods are passed as `()` in the
+  Lawful fields, and unnamed arguments are named after their type (they were
+  named `«_»`).
