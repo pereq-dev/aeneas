@@ -160,3 +160,14 @@ impl Opaque {
         x + 1
     }
 }
+
+// A closure in a function body: the `Fn*` impls of its closure get Lawful
+// obligations, unlike those of the closures of the decoration fns hax
+// generates for the contracts (e.g., `quantifiers`).
+fn apply<F: Fn(u32) -> u32>(f: F, x: u32) -> u32 {
+    f(x)
+}
+
+fn with_closure(x: u32) -> u32 {
+    apply(|y: u32| y, x)
+}

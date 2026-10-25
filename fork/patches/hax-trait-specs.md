@@ -56,6 +56,8 @@ structure, diagnostics, limitations, proof recipes).
 - An argument of a trait method that is not a variable in its precondition
   (e.g. `_`) is named after its type in its `Lawful` field, as in the
   functions with a body.
+- The impls nested in hax's decoration fns (the `Fn*` impls of the closures
+  of a contract) get no Lawful obligation.
 
 ## Tests
 
@@ -71,6 +73,8 @@ structure, diagnostics, limitations, proof recipes).
   `RustM.holds_bool` simp lemma they use.
 - `tests/hax/src/specs/arguments.rs` (`UnitArg`, `UnnamedArg`): a unit
   argument and an unnamed argument (`_: u32`) of a trait method.
+- `tests/hax/src/specs/contracts.rs` (`with_closure`): a closure in a function
+  body keeps its Lawful obligations.
 - `tests/src/hax-specs-no-core-models-lib.rs`: the `-specs hax` flag check.
 - `tests/hax/failures/clash_lawful`: the associated constant `Lawful` of a
   trait `Foo` clashes with the generated `Foo.Lawful` (fatal).
@@ -99,6 +103,7 @@ structure, diagnostics, limitations, proof recipes).
   named `«_»`).
 - 2026-10-25: layout of the output (symbols measured in code points, indented
   continuations).
+- 2026-10-25: no Lawful obligations for the impls nested in decoration fns.
 - 2026-11-04: rebased on the 2026-11-02 dev; since upstream's move to
   OCaml 5.4+ (`Format` measures strings in code points), the buffer
   formatter of `ExtractSpec.skip_on_failure` measures them in bytes with

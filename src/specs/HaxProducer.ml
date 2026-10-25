@@ -389,10 +389,24 @@ let produce (ctx : TranslateCore.trans_ctx)
       local_trait_decls
   in
   (* The Lawful obligations of the local trait impls, in the order of the
-     declaration groups (dependencies first) *)
+     declaration groups (dependencies first). The impls nested in a decoration
+     fn (e.g., the [Fn*] impls of its closures) belong to the encoding of the
+     contracts: they get none. *)
   let trait_impls =
     Pure.TraitImplId.Map.of_list
       (List.map (fun (i : Pure.trait_impl) -> (i.def_id, i)) crate.trait_impls)
+  in
+  let dec_names = Hashtbl.create 16 in
+  List.iter
+    (fun (ft : TranslateCore.pure_fun_translation) ->
+      if Pure.FunDeclId.Set.mem ft.f.def_id !dec_set then
+        Hashtbl.replace dec_names ft.f.item_meta.name ())
+    crate.fun_decls;
+  (* Is [name] strictly under the name of a decoration fn? *)
+  let in_decoration (name : Types.name) =
+    List.exists
+      (fun n -> Hashtbl.mem dec_names (Collections.List.prefix n name))
+      (List.init (max 0 (List.length name - 1)) (fun i -> i + 1))
   in
   let impl_obligations =
     List.concat_map
@@ -402,7 +416,9 @@ let produce (ctx : TranslateCore.trans_ctx)
             List.filter_map
               (fun id ->
                 match Pure.TraitImplId.Map.find_opt id trait_impls with
-                | Some (i : Pure.trait_impl) when i.item_meta.is_local ->
+                | Some (i : Pure.trait_impl)
+                  when i.item_meta.is_local
+                       && not (in_decoration i.item_meta.name) ->
                     Some
                       ({
                          id = fresh_proof_id ();
