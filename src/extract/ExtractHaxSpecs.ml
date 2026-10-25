@@ -27,10 +27,13 @@ module Helpers = struct
   let emit_wp (fmt : F.formatter) (k : unit -> unit) : unit =
     Extract.emit_delim ~add_spaces:false fmt "⦃ " k " ⦄"
 
-  (** Emit a binder [(<name> : <ty>)], with [k] printing [<ty>] *)
-  let emit_binder (ctx : ExtractBase.extraction_ctx) fmt (name : string)
+  (** Emit a binder [(<name> : <ty>)], with [k] printing [<ty>] (see
+      {!ExtractTypes.insert_req_space} for [space]) *)
+  let emit_binder ?space (ctx : ExtractBase.extraction_ctx) fmt (name : string)
       (k : unit -> unit) =
-    F.pp_print_space fmt ();
+    (match space with
+    | None -> F.pp_print_space fmt ()
+    | Some space -> ExtractTypes.insert_req_space fmt space);
     F.pp_open_hovbox fmt ctx.indent_incr;
     F.pp_print_string fmt ("(" ^ name);
     F.pp_print_space fmt ();
@@ -71,18 +74,26 @@ module Helpers = struct
         | None -> [%internal_error] span)
       inputs
 
-  (** The arguments of a method with signature [sg]: [()] for its unit inputs
-      (as in {!input_args}), and fresh variables registered in [ctx] for the
-      others, named after the inputs of the precondition [pre] (or, for an input
-      that is not a variable, e.g. [_], after its type, as in
+  (** The arguments of a trait method or of a function without a body, with
+      signature [sg]: [()] for its unit inputs (as in {!input_args}), and fresh
+      variables registered in [ctx] for the others. They are named after the
+      inputs of the precondition [pre], or else of the postcondition [post]
+      (whose first inputs are the same; only a function can lack [pre]: the
+      conditions of a trait method are synthesized by [HaxProducer]), or, for an
+      input that is not a variable (e.g. [_]), after its type (as in
       {!ExtractBase.ctx_add_vars}). *)
   let method_args span (ctx : ExtractBase.extraction_ctx) fresh_fvar_id
-      (sg : Pure.fun_sig) (pre : Pure.fun_decl option) :
+      (sg : Pure.fun_sig) ~(pre : Pure.fun_decl option)
+      ~(post : Pure.fun_decl option) :
       ExtractBase.extraction_ctx * Pure.texpr list =
     let inputs =
       Option.fold ~none:[]
         ~some:(fun (b : Pure.fun_body) -> b.inputs)
-        (Option.bind pre (fun (f : Pure.fun_decl) -> f.body))
+        (Option.bind
+           (match pre with
+           | Some _ -> pre
+           | None -> post)
+           (fun (f : Pure.fun_decl) -> f.body))
     in
     let basename i =
       match Option.bind (List.nth_opt inputs i) PureUtils.as_opt_pat_bound with
@@ -220,6 +231,21 @@ module Helpers = struct
     Extract.pp_print_utf8 fmt (").holds" ^ suffix);
     F.pp_close_box fmt ()
 
+  (** Emit the binders [(<x> : <ty>)] of the arguments [args] (see
+      {!method_args}) *)
+  let emit_arg_binders ?space span (ctx : ExtractBase.extraction_ctx) fmt
+      (args : Pure.texpr list) =
+    List.iter
+      (fun (a : Pure.texpr) ->
+        emit_binder ?space ctx fmt
+          (match a.e with
+          | FVar id -> ExtractBase.ctx_get_var span id ctx
+          | _ -> (* [()] *) "_")
+          (fun () ->
+            ExtractTypes.extract_ty span ctx fmt Pure.TypeDeclId.Set.empty
+              ~inside:false a.ty))
+      args
+
   (** Register the pre/post conditions in the (local) context *)
   let add_conditions (ctx : ExtractBase.extraction_ctx) ~pre ~post =
     let reg f_opt (ctx : ExtractBase.extraction_ctx) =
@@ -260,12 +286,17 @@ let emit_conditions ctx fmt ~pre ~post =
     generates [<Trait>.Lawful], and every local trait impl [<impl>] the theorem
     [<impl>.Lawful]. *)
 
-(** The registered name of [parent] *)
-let registered_fun_name (ctx : ExtractBase.extraction_ctx)
-    (parent : Pure.fun_decl) : string =
-  ExtractBase.ctx_get_raw (Some parent.item_meta.span)
-    (FunId (FromLlbc (FunId parent.def_id, parent.loop_id)))
-    ctx
+(** The name of [parent] the generated names start with: its registered name,
+    or, if it is mapped to an external name, the name it has otherwise (the
+    generated names belong to the crate) *)
+let parent_fun_name (ctx : ExtractBase.extraction_ctx) (parent : Pure.fun_decl)
+    : string =
+  match parent.external_info with
+  | Some _ -> ExtractBase.ctx_compute_fun_name parent false ctx
+  | None ->
+      ExtractBase.ctx_get_raw (Some parent.item_meta.span)
+        (FunId (FromLlbc (FunId parent.def_id, parent.loop_id)))
+        ctx
 
 (** [<fn>.<suffix>] *)
 let cond_name (parent_name : string) (suffix : string) : string =
@@ -388,7 +419,7 @@ let register_spec_names (ctx : ExtractBase.extraction_ctx)
       | Some parent ->
           let span = parent.item_meta.span in
           let conds, spec, _ =
-            generated_names (registered_fun_name ctx parent) fspec
+            generated_names (parent_fun_name ctx parent) fspec
           in
           let ctx = register_conds span conds ctx in
           ExtractBase.ctx_add span (SpecId spec_id) spec ctx)
@@ -432,7 +463,7 @@ let register_obligation_names (ctx : ExtractBase.extraction_ctx)
       | None -> ctx
       | Some parent ->
           let _, _, proof =
-            generated_names (registered_fun_name ctx parent) fspec
+            generated_names (parent_fun_name ctx parent) fspec
           in
           ExtractBase.ctx_add parent.item_meta.span (ProofObligationId proof_id)
             proof ctx)
@@ -706,7 +737,7 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
       in
       let ctx = add_conditions ctx ~pre ~post in
       let _, fresh_fvar_id = Pure.FVarId.fresh_stateful_generator () in
-      let ctx, args = method_args span ctx fresh_fvar_id sg pre in
+      let ctx, args = method_args span ctx fresh_fvar_id sg ~pre ~post in
       F.pp_print_space fmt ();
       F.pp_open_vbox fmt ctx.indent_incr;
       F.pp_open_hovbox fmt ctx.indent_incr;
@@ -715,16 +746,7 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
         { sg.generics with trait_clauses = [] }
         (Some sg.explicit_info) type_params cg_params [];
       emit_lawful_clause_binders span ctx fmt Method sg.generics.trait_clauses;
-      List.iter
-        (fun (a : Pure.texpr) ->
-          emit_binder ctx fmt
-            (match a.e with
-            | FVar id -> ctx_get_var span id ctx
-            | _ -> (* [()] *) "_")
-            (fun () ->
-              ExtractTypes.extract_ty span ctx fmt no_params_tys ~inside:false
-                a.ty))
-        args;
+      emit_arg_binders span ctx fmt args;
       F.pp_print_space fmt ();
       F.pp_print_string fmt ":";
       F.pp_close_box fmt ();
@@ -795,17 +817,34 @@ let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
 
 (** Emit the binders of the function [f], followed by [:]: its generic and value
     parameters, then the Lawful binders of its trait clauses. Return the context
-    with the parameters registered, and the (unescaped) names of the Lawful
-    binders. *)
-let emit_fun_binders (ctx : ExtractBase.extraction_ctx) fmt (f : Pure.fun_decl)
-    =
+    with the parameters registered, the (unescaped) names of the Lawful binders,
+    and the arguments to apply [f] to. The value parameters of a function
+    without a body are named as in its conditions [pre] and [post] (see
+    {!method_args}). *)
+let emit_fun_binders (ctx : ExtractBase.extraction_ctx) fmt fresh_fvar_id ~pre
+    ~post (f : Pure.fun_decl) =
+  let span = f.item_meta.span in
   let sg = f.signature in
-  emit_binders_with_lawfuls f.item_meta.span ctx fmt f.item_meta.name
-    sg.llbc_generics sg.generics
-    (sg.generics <> PureUtils.empty_generic_params || sg.inputs <> [])
-    (fun space ctx ->
-      let _, ctx, _ = Extract.extract_fun_parameters space ctx fmt f in
-      ctx)
+  let args = ref [] in
+  let ctx, lawful_names =
+    emit_binders_with_lawfuls span ctx fmt f.item_meta.name sg.llbc_generics
+      sg.generics
+      (sg.generics <> PureUtils.empty_generic_params || sg.inputs <> [])
+      (fun space ctx ->
+        let _, ctx, _ = Extract.extract_fun_parameters space ctx fmt f in
+        match f.body with
+        | Some { inputs; _ } ->
+            args := input_args span inputs;
+            ctx
+        | None ->
+            let ctx, sg_args =
+              method_args span ctx fresh_fvar_id sg ~pre ~post
+            in
+            emit_arg_binders ~space span ctx fmt sg_args;
+            args := sg_args;
+            ctx)
+  in
+  (ctx, lawful_names, !args)
 
 (** Emit the binders of the trait impl [impl] of the trait [d], followed by [:]:
     its generic parameters, named as in its definition (see
@@ -860,11 +899,6 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) =
                   parent.body;
             }
           in
-          let arg_texprs =
-            match parent.body with
-            | None -> []
-            | Some { inputs; _ } -> input_args span inputs
-          in
           (* Fresh result-var id, from the body generator so it can't clash. *)
           let res_id = fresh_fvar_id () in
 
@@ -882,8 +916,10 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) =
               F.pp_print_space fmt ()
           | None -> ());
           F.pp_print_string fmt
-            (escape_name (spec_name (registered_fun_name ctx parent)));
-          let ctx, _ = emit_fun_binders ctx fmt parent in
+            (escape_name (spec_name (parent_fun_name ctx parent)));
+          let ctx, _, arg_texprs =
+            emit_fun_binders ctx fmt fresh_fvar_id ~pre ~post parent
+          in
           F.pp_print_space fmt ();
           F.pp_print_string fmt "Prop :=";
           F.pp_close_box fmt ();
@@ -930,7 +966,7 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) =
 let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
   let open ExtractBase in
   match o with
-  | FunctionContract { spec = { fn; _ }; proof } -> (
+  | FunctionContract { spec = { fn; pre; post }; proof } -> (
       match Pure.FunDeclId.Map.find_opt fn ctx.trans_funs with
       | None -> (* Reported by [register_spec_names] *) ()
       | Some ft ->
@@ -939,7 +975,7 @@ let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
           let sg = parent.signature in
           let explicit = sg.explicit_info in
           let generics = PureUtils.generic_args_of_params sg.generics in
-          let parent_name = registered_fun_name ctx parent in
+          let parent_name = parent_fun_name ctx parent in
 
           (* Open the parent's body binders *)
           let _, fresh_fvar_id = Pure.FVarId.fresh_stateful_generator () in
@@ -952,11 +988,6 @@ let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
                     snd (PureUtils.open_all_fun_body fresh_fvar_id span b))
                   parent.body;
             }
-          in
-          let arg_texprs =
-            match parent.body with
-            | None -> []
-            | Some { inputs; _ } -> input_args span inputs
           in
 
           (* Blank line before the entry. *)
@@ -973,7 +1004,9 @@ let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
           F.pp_print_string fmt "theorem";
           F.pp_print_space fmt ();
           F.pp_print_string fmt (escape_name (proof_name parent_name));
-          let ctx, lawful_names = emit_fun_binders ctx fmt parent in
+          let ctx, lawful_names, arg_texprs =
+            emit_fun_binders ctx fmt fresh_fvar_id ~pre ~post parent
+          in
           F.pp_print_space fmt ();
           (* The statement of correctness, in its own box:
              [<fn>.spec <generics> <args> <lawful args>]. *)

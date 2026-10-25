@@ -89,6 +89,11 @@ theorem both.spec.proof (x : Std.U32) :
   postcondition is `⌜ True ⌝`.
 - `.spec` is a total-correctness triple (`⇓`): the function must not panic or
   diverge.
+- A function without a body (e.g. `#[hax_lib::opaque]`) gets the same spec and
+  obligation, about its axiom, or about the Lean definition it is mapped to
+  with `-external-names` (the generated names are still those of the Rust
+  function). The obligation about an axiom cannot be proved: assume it (e.g.
+  as an `axiom`).
 
 ### Trait contracts and `X.Lawful`
 
