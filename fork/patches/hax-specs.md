@@ -64,8 +64,10 @@ are consumed by the producer.
   Lean package `HaxTests`, under `Extraction/`) is committed, next to
   handwritten assumptions (`Assumptions/`) and proofs of the obligations
   (`Verification/`). Every contract is proved; one that cannot be is left out
-  of the crate, with a comment. `make verify-hax` checks that every obligation
-  has a proof, not commented out and without `sorry`.
+  of the crate, with a comment. The exceptions are the contracts of the opaque
+  functions that stay axioms (`hax-trait-specs`): they are assumed in
+  `Assumptions/OpaqueContracts.lean`. `make verify-hax` checks that every
+  obligation has a proof, not commented out and without `sorry`.
 - The modules of `tests/hax/src/specs/`: the shape of contracts, arguments
   (unit arguments, #79), `&mut` inputs and `future`, generics, mutually
   recursive functions, trait methods (`specs/traits/condition_clauses.rs`:

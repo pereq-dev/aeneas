@@ -60,6 +60,14 @@ structure, diagnostics, limitations, proof recipes).
   of a contract) get no Lawful obligation.
 - Lawful binder names are built from the unescaped clause names, and escaped
   when printed.
+- The spec and obligation of a function without a body (e.g.
+  `#[hax_lib::opaque]`, except an opaque method of a `#[hax_lib::attributes]`
+  impl, whose decoration fns are hidden with its body: BUG note in
+  `tests/hax/src/specs/contracts.rs`) are generated as for the other
+  functions: the value binders come from the signature, named after the
+  inputs of the precondition (or else of the postcondition). A function
+  mapped by `-external-names` (patch `external-names`) is applied by its
+  external name, but its generated names are those of the Rust function.
 
 ## Tests
 
@@ -86,12 +94,21 @@ structure, diagnostics, limitations, proof recipes).
   the generics of a parent clause in `parent_ref` (used by `cond_generics`'
   `with_parents` and the `<P>InstLawful` parent fields), at an impl's and a
   caller's arguments.
+- `tests/hax/src/specs/opaque.rs`: contracts of opaque functions (a caller,
+  only `#[ensures]`, unit arguments, no argument, an unnamed argument, a
+  trait clause), assumed in
+  `Assumptions/OpaqueContracts.lean`; `is_mult` is mapped by
+  `tests/hax/external-names.json` to `Assumptions/ExternalModels.lean`, and its
+  obligation proved against the model.
 
 ## Rebase notes
 
 - Depends on `hax-specs`, `core-models-lib`,
-  `trait-field-constructor-clash` (`check_trait_field_clash`) and, for the
-  proofs of the tests, `mvcgen-result-specs` (`triple_prop_*`).
+  `trait-field-constructor-clash` (`check_trait_field_clash`),
+  `external-names` (`parent_fun_name` reads `external_info`, the field of
+  `Pure.fun_decl` renamed by that patch: upstream calls it `builtin_info`) and,
+  for the proofs of the tests, `mvcgen-result-specs` (`triple_prop_*`); the
+  tests also use `external-names` and `extra-includes`.
 - The `tests/hax` outputs are produced by `cargo hax extract`: re-extract them
   with `make extract-hax` and re-check the proofs with
   `make verify-hax` (see `hax-specs`).
@@ -115,6 +132,10 @@ structure, diagnostics, limitations, proof recipes).
   (`trait-field-constructor-clash`).
 - 2026-10-25: the `RustM.holds` lemmas of `Verification/Lemmas.lean` moved to
   the library (`mvcgen-result-specs`).
+- 2026-10-25: contracts of functions without a body: the spec and obligation
+  take their arguments from the signature (they applied the function to no
+  argument); under an external name, they keep the names of the Rust
+  function.
 - 2026-11-04: rebased on the 2026-11-02 dev; since upstream's move to
   OCaml 5.4+ (`Format` measures strings in code points), the buffer
   formatter of `ExtractSpec.skip_on_failure` measures them in bytes with

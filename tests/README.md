@@ -80,18 +80,29 @@ The Lean package `HaxTests` is laid out as follows (see also
 - `HaxTests/Verification/Lemmas.lean` and `HaxTests/Verification/MissingCore.lean`: helper lemmas
   for these proofs, and lemmas about `CoreModels` missing upstream.
 - `HaxTests/Assumptions/MissingCore.lean`: stubs of the `Lawful` structures of `CoreModels` traits,
-  until `CoreModels` provides them. Imported into every file Aeneas generates by
-  `aeneas-args = ["-extra-includes", "HaxTests.Assumptions.MissingCore"]` in `tests/hax/hax.toml`,
-  so it must not import any other `HaxTests` module.
+  until `CoreModels` provides them.
+- `HaxTests/Assumptions/ExternalModels.lean`: handwritten Lean models of the opaque functions that
+  `tests/hax/external-names.json` maps to them (Aeneas' `-external-names`), so that their contracts
+  are proved against the model.
+- `MissingCore` and `ExternalModels` are imported into every file Aeneas generates by
+  `-extra-includes` in the `aeneas-args` of `tests/hax/hax.toml`, so they must not import any other
+  `HaxTests` module.
 - `HaxTests/Assumptions/FunsExternal.lean` and `TypesExternal.lean`: the models of external
-  definitions. hax seeds each one, if absent, from the `Extraction/*External_Template.lean` file
-  Aeneas generates, then never modifies it; `Extraction/FunsExternal.lean` and
-  `TypesExternal.lean` are hax shims importing them.
+  definitions (the other opaque functions are axioms there). hax seeds each one, if absent, from the
+  `Extraction/*External_Template.lean` file Aeneas generates (git-ignored), then never modifies it;
+  `Extraction/FunsExternal.lean` and `TypesExternal.lean` are hax shims importing them. When the
+  crate gains or changes an external definition, copy its declaration from the regenerated template
+  into the `Assumptions/` file by hand (or delete that file to have hax seed it again).
+- `HaxTests/Assumptions/OpaqueContracts.lean`: handwritten axioms assuming the contracts of the
+  opaque functions of `src/specs/opaque.rs` that stay axioms; `Verification/ProofObligations.lean`
+  discharges their obligations with them.
 
 Every contract of the test crate has a handwritten proof under `Verification/`, under the name of
 its obligation; a contract that cannot be proved is left out of the crate, with a comment saying
-why. `make verify-hax` fails if an obligation of `Extraction/ProofObligations.lean` has no proof
-there (commented-out declarations do not count), or if a proof there uses `sorry`.
+why. The exceptions are the contracts of the opaque functions that stay axioms: they are assumed in
+`Assumptions/OpaqueContracts.lean`. `make verify-hax` fails if an obligation of
+`Extraction/ProofObligations.lean` has no proof there (commented-out declarations do not count), or
+if a proof there uses `sorry`.
 
 The crates of `tests/hax/failures/` must fail to extract (e.g. a name clash with a generated spec),
 one crate per error, so that each output shows one. `make extract-hax` extracts each of

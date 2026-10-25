@@ -6,6 +6,7 @@ public import CoreModels
 public import HaxTests.Extraction.Types
 public import HaxTests.Extraction.FunsExternal
 public import HaxTests.Assumptions.MissingCore
+public import HaxTests.Assumptions.ExternalModels
 @[expose] public section
 open CoreModels Aeneas
 open Aeneas.Std hiding namespace core alloc
@@ -704,6 +705,11 @@ def specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0
     specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0.get
     «NegT-1Inst»
 }
+
+/-- [hax_tests::specs::opaque::call_incr]:
+    Source: 'src/specs/opaque.rs', lines 17:0-19:1 -/
+def specs.opaque.call_incr (x : Std.U32) : RustM Std.U32 := do
+  specs.opaque.incr x
 
 /-- [hax_tests::specs::traits::assoc_consts::Bounded::MIN]
     Source: 'src/specs/traits/assoc_consts.rs', lines 13:4-13:23 -/

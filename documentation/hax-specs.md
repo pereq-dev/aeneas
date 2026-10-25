@@ -92,6 +92,12 @@ theorem both.spec.proof (x : Std.U32) :
   postcondition is `⌜ True ⌝`.
 - `.spec` is a total-correctness triple (`⇓`): the function must not panic or
   diverge.
+- A function without a body (e.g. `#[hax_lib::opaque]`, except an opaque
+  method of a `#[hax_lib::attributes]` impl, see [Limitations](#limitations))
+  gets the same spec and obligation, about its axiom, or about the Lean
+  definition it is mapped to with `-external-names` (the generated names are
+  still those of the Rust function). The obligation about an axiom cannot be
+  proved: assume it (e.g. as an `axiom`).
 
 ### Trait contracts and `X.Lawful`
 
@@ -265,6 +271,12 @@ fields); the check is case-sensitive (a method `lawful` is fine).
 - **Mutually recursive methods** of an impl need one joint proof: the
   obligation is a single `<impl>.Lawful` theorem, so prove the methods together
   in a separate lemma and use it for each field.
+- **Opaque methods in a `#[hax_lib::attributes]` impl** lose their
+  conditions: hax-lib puts their decoration functions inside the method body,
+  which `#[hax_lib::opaque]` hides, so Aeneas only logs ``references unknown
+  decoration uid …; skipping that side`` and generates no spec for that side
+  (`tests/hax/src/specs/contracts.rs`, `Opaque::opaque_requires`). Free opaque
+  functions are not affected (`tests/hax/src/specs/opaque.rs`).
 
 ### Proving the obligations
 
