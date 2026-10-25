@@ -128,9 +128,10 @@ endif
 # Reformat the project files
 .PHONY: format
 format:
-	@# `|| `true` because the command returns an error if it changed anything, which we don't care about.
-	cd src && dune fmt || true
-	cd tests/test_runner && dune fmt || true
+	@# `|| true` because the command returns an error if it changed anything, which we don't care about.
+	@# But fail if ocamlformat skipped a file (e.g. a misplaced doc comment): it stays unformatted.
+	cd src && out=$$(dune fmt 2>&1 || true); printf '%s\n' "$$out"; ! printf '%s\n' "$$out" | grep -q '^ocamlformat: ignoring'
+	cd tests/test_runner && out=$$(dune fmt 2>&1 || true); printf '%s\n' "$$out"; ! printf '%s\n' "$$out" | grep -q '^ocamlformat: ignoring'
 	rustfmt $(RUSTFMT_FLAGS) $(INPUTS_DIR)/*.rs
 
 .PHONY: clean
