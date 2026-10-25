@@ -188,7 +188,7 @@ theorem specs.generics.trait_clause.spec.proof {T : Type} (ValInst :
   (t : T) (x : Std.U32) (ValInstLawful : specs.generics.Val.Lawful T ValInst) :
   specs.generics.trait_clause.spec ValInst t x ValInstLawful := by
   unfold specs.generics.trait_clause.spec specs.generics.trait_clause specs.generics.trait_clause.pre
-  simp only [bind_tc_ok, RustM.holds_bind_iff, forall_exists_index, and_imp]
+  simp only [bind_tc_ok, triple_prop_bind_iff, forall_exists_index, and_imp]
   intro b hpre hb
   obtain ⟨v, hv, hpre⟩ := RustM.bind_eq_ok.1 hpre
   simp only [hv]
@@ -203,7 +203,7 @@ theorem specs.generics.where_clause.spec.proof {T : Type} (ValInst :
   (t : T) (ValInstLawful : specs.generics.Val.Lawful T ValInst) :
   specs.generics.where_clause.spec ValInst t ValInstLawful := by
   unfold specs.generics.where_clause.spec specs.generics.where_clause specs.generics.where_clause.pre
-  simp only [bind_tc_ok, RustM.holds_bind_iff, forall_exists_index, and_imp]
+  simp only [bind_tc_ok, triple_prop_bind_iff, forall_exists_index, and_imp]
   intro b hpre hb
   obtain ⟨v, hv, hpre⟩ := RustM.bind_eq_ok.1 hpre
   simp only [hv]
@@ -499,7 +499,7 @@ theorem specs.generics.assoc_type.spec.proof {P : Type} (ProducerPU32Inst :
   (ProducerPU32InstLawful : specs.generics.Producer.Lawful P Std.U32 ProducerPU32Inst) :
   specs.generics.assoc_type.spec ProducerPU32Inst p ProducerPU32InstLawful := by
   unfold specs.generics.assoc_type.spec specs.generics.assoc_type specs.generics.assoc_type.pre
-  simp only [bind_tc_ok, RustM.holds_bind_iff, forall_exists_index, and_imp]
+  simp only [bind_tc_ok, triple_prop_bind_iff, forall_exists_index, and_imp]
   intro b hpre hb
   obtain ⟨v, hv, hpre⟩ := RustM.bind_eq_ok.1 hpre
   simp only [hv]
@@ -536,7 +536,7 @@ theorem specs.generics.Wrapper.inner_value.spec.proof {T : Type} (ValInst :
   (self : specs.generics.Wrapper T) (ValInstLawful : specs.generics.Val.Lawful T ValInst) :
   specs.generics.Wrapper.inner_value.spec ValInst self ValInstLawful := by
   unfold specs.generics.Wrapper.inner_value.spec specs.generics.Wrapper.inner_value specs.generics.Wrapper.inner_value.pre
-  simp only [bind_tc_ok, RustM.holds_bind_iff, forall_exists_index, and_imp]
+  simp only [bind_tc_ok, triple_prop_bind_iff, forall_exists_index, and_imp]
   intro b hpre hb
   obtain ⟨v, hv, hpre⟩ := RustM.bind_eq_ok.1 hpre
   simp only [hv]

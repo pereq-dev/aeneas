@@ -25,60 +25,15 @@ set_option maxRecDepth 2048
 noncomputable section
 
 
-/-- Inversion of a precondition that starts with a monadic call: if
-`(m >>= f).holds`, then `m` returns some `a` (no panic/divergence) and `(f a).holds`. -/
-theorem Aeneas.Std.RustM.holds_bind {α : Type} {m : RustM α} {f : α → RustM Prop}
-    (h : (m >>= f).holds) : ∃ a, m = ok a ∧ (f a).holds := by
-  obtain ⟨p, hp, hpp⟩ := triple_iff_exists_ok.1 h
-  cases m with
-  | ret a => exact ⟨a, rfl, triple_iff_exists_ok.2 ⟨p, by simpa [Bind.bind] using hp, hpp⟩⟩
-  | vis i k => cases i; simp [Bind.bind] at hp
-  | div => simp [Bind.bind] at hp
-
 /-- Inversion of a successful bind: `m >>= f` returns `b` iff `m` returns some `a`
 and `f a` returns `b`. Not `@[simp]`: pass it explicitly, to split a precondition
-that `holds_bind_iff` turned into an equation on a monadic computation. -/
+that `triple_prop_bind_iff` turned into an equation on a monadic computation. -/
 theorem Aeneas.Std.RustM.bind_eq_ok {α β : Type} {m : RustM α} {f : α → RustM β} {b : β} :
     (m >>= f) = ok b ↔ ∃ a, m = ok a ∧ f a = ok b := by
   cases m with
   | ret a => simp [Bind.bind]
   | vis i k => cases i; simp [Bind.bind]
   | div => simp [Bind.bind]
-
-/-- `holds_bind` as an equivalence, for `simp`: a precondition starting with a
-monadic call (e.g. a trait method, which has no `@[spec]`) becomes a plain
-hypothesis about the call's result. -/
-theorem Aeneas.Std.RustM.holds_bind_iff {α : Type} {m : RustM α} {f : α → RustM Prop} :
-    (m >>= f).holds ↔ ∃ a, m = ok a ∧ (f a).holds := by
-  constructor
-  · exact RustM.holds_bind
-  · rintro ⟨_, rfl, _⟩
-    simpa
-
-/-- A `RustM Bool` contract leg (the `.pre`/`.post` defs of trait methods) used
-as a `RustM Prop` is coerced as `do let a ← x; pure (a = true)`, whose simp normal
-form is `(· = true) <$> x`; nothing in Aeneas/Hax simplifies its `.holds`. It holds
-iff the leg evaluates to `ok true`. -/
-@[simp] theorem Aeneas.Std.RustM.holds_bool (x : RustM Bool) :
-    ((fun a => a = true) <$> x : RustM Prop).holds ↔ x = ok true := by
-  rw [RustM.holds, triple_iff_exists_ok]
-  cases x with
-  | ret a =>
-    simp only [Functor.map, bind_ok]
-    simp
-    exact ⟨fun ⟨_, h, ha⟩ => h.2 ha, fun hp => ⟨_, Iff.rfl, hp⟩⟩
-  | vis i k => cases i; simp [Functor.map]
-  | div => simp [Functor.map]
-
-/-- `(pure p).holds` is `p` (nothing in Aeneas/Hax simplifies it). Not `@[simp]`:
-as a simp lemma it changes what `simp_all` does to the hypotheses of existing
-proofs (e.g. `specs.generics.trait_clause.spec.proof` loses its precondition);
-pass it explicitly, `simp [RustM.holds_pure]`. -/
-theorem Aeneas.Std.RustM.holds_pure (p : Prop) : (pure p : RustM Prop).holds ↔ p := by
-  rw [RustM.holds, triple_iff_exists_ok]
-  simp only [pure]
-  simp
-  exact ⟨fun ⟨_, h, ha⟩ => h.2 ha, fun hp => ⟨_, Iff.rfl, hp⟩⟩
 
 /- Bridges between Aeneas specs and `Std.Do` triples, already in Aeneas
 (`Aeneas/Std/WP.lean`), to use rather than restating them:
@@ -87,7 +42,10 @@ theorem Aeneas.Std.RustM.holds_pure (p : Prop) : (pure p : RustM Prop).holds ↔
   the `Lawful` fields;
 - `Aeneas.Std.triple_iff_exists_ok`: such a total-correctness triple is
   `∃ a, m = .ok a ∧ P a`; the `Lawful` fields do not state `m = ok res`, this
-  recovers it on the consuming side. -/
+  recovers it on the consuming side;
+- `Aeneas.Std.triple_prop_bind_iff`, `triple_prop_pure_iff` and
+  `triple_prop_map_eq_true_iff` (`@[simp]`): `.holds` of a bind, of `pure p` and of
+  a `RustM Bool` condition. -/
 
 open Lean Elab Command in
 /-- `register_closure_specs ns` marks `@[spec]` the `call`/`call_mut`/`call_once`
