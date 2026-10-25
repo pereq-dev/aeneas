@@ -892,6 +892,39 @@ theorem triple_with_self {α : Type u} {x : RustM α} {P : α → Prop}
   obtain ⟨a, hx, hPa⟩ := triple_iff_exists_ok.1 h
   exact (triple_iff_post_of_eq_ok hx).2 ⟨hPa, triple_post_eq_iff_eq.2 hx⟩
 
+/-!
+The lemmas below are about triples of a proposition-valued program `x : RustM Prop`, with
+postcondition `⇓ p => ⌜ p ⌝` (i.e., "`x` returns a proposition which holds"). This is the shape
+of the pre/postconditions of specs (e.g., hax's `RustM.holds`). `simp` does not use the general
+lemmas above (e.g., `triple_iff_exists_ok`) on this shape, as it cannot infer their `P`.
+-/
+
+/-- A triple on a proposition-valued bind holds iff the first computation returns
+some `a` and the triple holds on the continuation applied to `a`. -/
+theorem triple_prop_bind_iff {α : Type} {x : RustM α} {f : α → RustM Prop} :
+    ⦃ ⌜ True ⌝ ⦄ (x >>= f) ⦃ ⇓ p => ⌜ p ⌝ ⦄ ↔
+    ∃ a, x = .ok a ∧ ⦃ ⌜ True ⌝ ⦄ f a ⦃ ⇓ p => ⌜ p ⌝ ⦄ := by
+  cases x with
+  | ret a => simp [Bind.bind]
+  | vis i k => cases i; simp [Bind.bind, Triple, WP.wp, PredTrans.apply]
+  | div => simp [Bind.bind, Triple, WP.wp, PredTrans.apply]
+
+/-- A triple on `pure p` holds iff `p` holds. Not `@[simp]`: as a simp lemma, it changes how
+`simp_all` normalizes hypotheses, which can break existing proofs. -/
+theorem triple_prop_pure_iff (p : Prop) :
+    ⦃ ⌜ True ⌝ ⦄ (pure p : RustM Prop) ⦃ ⇓ q => ⌜ q ⌝ ⦄ ↔ p :=
+  triple_iff_post_of_eq_ok (P := id) rfl
+
+/-- A boolean condition `x : RustM Bool` used as a proposition is coerced to
+`x >>= fun a => pure (a = true)`, whose simp normal form (`bind_pure_comp`) is
+`(· = true) <$> x`: it holds iff `x` returns `true`. -/
+@[simp] theorem triple_prop_map_eq_true_iff (x : RustM Bool) :
+    ⦃ ⌜ True ⌝ ⦄ ((· = true) <$> x : RustM Prop) ⦃ ⇓ p => ⌜ p ⌝ ⦄ ↔ x = .ok true := by
+  cases x with
+  | ret a => simp [Functor.map, Triple, WP.wp, PredTrans.apply]
+  | vis i k => cases i; simp [Functor.map, Triple, WP.wp, PredTrans.apply]
+  | div => simp [Functor.map, Triple, WP.wp, PredTrans.apply]
+
 /- Modus-ponens-like reasoning on a `noThrow` and a `mayThrow` triple -/
 theorem triple_in_hypothesis {α : Type u} {f : RustM α} {Q : α → Assertion RustM.postShape}
     (p : Prop)
