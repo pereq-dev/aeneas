@@ -667,14 +667,24 @@ let fun_external_filter_types_trait_clauses (ty_to_string : 'a -> string)
       Result.Ok (types, explicit, clauses)
   | Result.Error msg, _ | _, Result.Error msg -> Result.Error msg
 
+(** Print [s], measured in code points rather than in bytes, so that non-ASCII
+    symbols (e.g., [⦃]) don't shift the layout *)
+let pp_print_utf8 fmt (s : string) : unit =
+  let width =
+    String.fold_left
+      (fun n c -> if Char.code c land 0xC0 = 0x80 then n else n + 1)
+      0 s
+  in
+  F.pp_print_as fmt width s
+
 (** Emit a boxed delimiter: [<l> <inner> <r>] inside an [hovbox] *)
 let emit_delim ?(add_spaces = true) fmt l k r : unit =
   F.pp_open_hovbox fmt 0;
-  F.pp_print_string fmt l;
+  pp_print_utf8 fmt l;
   if add_spaces then F.pp_print_space fmt ();
   k ();
   if add_spaces then F.pp_print_space fmt ();
-  F.pp_print_string fmt r;
+  pp_print_utf8 fmt r;
   F.pp_close_box fmt ()
 
 (** [inside]: see {!extract_ty}. [with_type]: do we also generate a type

@@ -6,7 +6,7 @@ module Helpers = struct
     List.iteri
       (fun i w ->
         if i > 0 then F.pp_print_space fmt ();
-        F.pp_print_string fmt w)
+        Extract.pp_print_utf8 fmt w)
       words
 
   (** Emit a pre/post condition function declaration. [extract_fun_decl] emits
@@ -16,9 +16,10 @@ module Helpers = struct
     Extract.extract_fun_decl ctx fmt ExtractBase.SingleNonRec false f
 
   (** Run [k] on its own line inside an [hovbox] *)
-  let line (fmt : F.formatter) (k : unit -> unit) : unit =
+  let line (ctx : ExtractBase.extraction_ctx) (fmt : F.formatter)
+      (k : unit -> unit) : unit =
     F.pp_print_cut fmt ();
-    F.pp_open_hovbox fmt 0;
+    F.pp_open_hovbox fmt ctx.indent_incr;
     k ();
     F.pp_close_box fmt ()
 
@@ -27,9 +28,10 @@ module Helpers = struct
     Extract.emit_delim ~add_spaces:false fmt "⦃ " k " ⦄"
 
   (** Emit a binder [(<name> : <ty>)], with [k] printing [<ty>] *)
-  let emit_binder fmt (name : string) (k : unit -> unit) =
+  let emit_binder (ctx : ExtractBase.extraction_ctx) fmt (name : string)
+      (k : unit -> unit) =
     F.pp_print_space fmt ();
-    F.pp_open_hovbox fmt 0;
+    F.pp_open_hovbox fmt ctx.indent_incr;
     F.pp_print_string fmt ("(" ^ name);
     F.pp_print_space fmt ();
     F.pp_print_string fmt ":";
@@ -207,15 +209,15 @@ module Helpers = struct
       trait_refs = (self_ref :: trait_args.trait_refs) @ method_args.trait_refs;
     }
 
-  (** Emit [(<cond> <generics> <args>).holds] for a fn [f]. *)
-  let emit_holds span ctx fmt generics args (f : Pure.fun_decl) =
+  (** Emit [(<cond> <generics> <args>).holds<suffix>] for a fn [f]. *)
+  let emit_holds ?(suffix = "") span ctx fmt generics args (f : Pure.fun_decl) =
     let generics = cond_generics span ctx generics f in
     let head = fun_head f.def_id generics f.signature.output in
-    F.pp_open_hovbox fmt 0;
+    F.pp_open_hovbox fmt ctx.indent_incr;
     F.pp_print_string fmt "(";
     Extract.extract_App span ctx fmt ~inside:false ~inside_do:false head args
       f.signature.output;
-    F.pp_print_string fmt ").holds";
+    Extract.pp_print_utf8 fmt (").holds" ^ suffix);
     F.pp_close_box fmt ()
 
   (** Register the pre/post conditions in the (local) context *)
@@ -497,37 +499,36 @@ let emit_statement ctx fmt span (head : Pure.texpr) generics output_ty
   (* Register the postcondition's result variable *)
   let ctx, res_name = ctx_add_var span "res" res_id ctx in
   let res_texpr : Pure.texpr = { e = FVar res_id; ty = output_ty } in
-  let emit_holds = emit_holds span ctx fmt generics in
+  let emit_holds ?suffix = emit_holds ?suffix span ctx fmt generics in
   let emit_pure k = Extract.emit_delim ~add_spaces:false fmt "⌜ " k " ⌝" in
 
   (* Optional pre-hypothesis: [(<fn>.pre <args>).holds →]. *)
   (match pre with
   | None -> ()
   | Some pre_fn ->
-      line fmt (fun () ->
-          emit_holds arg_texprs pre_fn;
-          F.pp_print_space fmt ();
-          F.pp_print_string fmt "→"));
+      line ctx fmt (fun () -> emit_holds ~suffix:" →" arg_texprs pre_fn));
 
   (* The (trivial) triple precondition. *)
-  line fmt (fun () ->
+  line ctx fmt (fun () ->
       emit_wp fmt (fun () -> emit_pure (fun () -> F.pp_print_string fmt "True")));
 
   (* The real function application [<fn> <args>], via the standard printer. *)
-  line fmt (fun () ->
+  line ctx fmt (fun () ->
       Extract.extract_App span ctx fmt ~inside:false ~inside_do:false head
         arg_texprs output_ty);
 
   (* The triple postcondition: [(<fn>.post <args> res).holds], or [True] when
-     the function has no postcondition. *)
-  line fmt (fun () ->
-      emit_wp fmt (fun () ->
-          emit_words fmt [ "⇓"; res_name; "=>" ];
-          F.pp_print_break fmt 1 ctx.indent_incr;
-          emit_pure (fun () ->
-              match post with
-              | None -> F.pp_print_string fmt "True"
-              | Some post_fn -> emit_holds (arg_texprs @ [ res_texpr ]) post_fn)))
+     the function has no postcondition. The closing delimiters are printed in
+     the box of the condition, so that its line breaks account for them. *)
+  line ctx fmt (fun () ->
+      Extract.pp_print_utf8 fmt "⦃ ";
+      emit_words fmt [ "⇓"; res_name; "=>" ];
+      F.pp_print_space fmt ();
+      match post with
+      | None -> Extract.pp_print_utf8 fmt "⌜ True ⌝ ⦄"
+      | Some post_fn ->
+          Extract.pp_print_utf8 fmt "⌜ ";
+          emit_holds ~suffix:" ⌝ ⦄" (arg_texprs @ [ res_texpr ]) post_fn)
 
 (** {1 Lawful structures} *)
 
@@ -610,10 +611,10 @@ let emit_lawful_clause_binders span (ctx : ExtractBase.extraction_ctx) fmt
       let name =
         ExtractBase.ctx_get_local_trait_clause span origin c.clause_id ctx
       in
-      emit_binder fmt name (fun () ->
+      emit_binder ctx fmt name (fun () ->
           ExtractTypes.extract_trait_clause_type span ctx fmt
             Pure.TypeDeclId.Set.empty c);
-      emit_binder fmt (lawful_binder_name name) (fun () ->
+      emit_binder ctx fmt (lawful_binder_name name) (fun () ->
           emit_lawful_type span ctx fmt tr))
     clauses args.trait_refs
 
@@ -723,7 +724,7 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
       emit_lawful_clause_binders span ctx fmt Method sg.generics.trait_clauses;
       List.iter
         (fun (a : Pure.texpr) ->
-          emit_binder fmt
+          emit_binder ctx fmt
             (match a.e with
             | FVar id -> ctx_get_var span id ctx
             | _ -> (* [()] *) "_")
@@ -759,14 +760,16 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
     methods;
   F.pp_close_box fmt ()
 
-(** Emit the binders of an item [name] with generics [generics]: [emit_params]
-    emits its parameters and registers them, then we emit the Lawful binders of
-    its trait clauses. Return the context with the parameters registered, and
-    the names of the Lawful binders. *)
+(** Emit the binders of an item [name] with generics [generics], followed by
+    [:]: [emit_params] emits its parameters, if [has_params], and registers them
+    (see {!ExtractTypes.insert_req_space} for [space]), then we emit the Lawful
+    binders of its trait clauses. Return the context with the parameters
+    registered, and the names of the Lawful binders. *)
 let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
     (name : Types.name) (llbc_generics : Types.generic_params)
-    (generics : Pure.generic_params)
-    (emit_params : ExtractBase.extraction_ctx -> ExtractBase.extraction_ctx) =
+    (generics : Pure.generic_params) (has_params : bool)
+    (emit_params :
+      bool ref -> ExtractBase.extraction_ctx -> ExtractBase.extraction_ctx) =
   let open ExtractBase in
   (* Reserve the Lawful names, so that no parameter takes them. The clause
      names are those [emit_params] computes: they end with [Inst] (and an
@@ -775,33 +778,42 @@ let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
     ctx_add_generic_params span name Item llbc_generics generics ctx
   in
   let lawful_names = List.map lawful_binder_name clause_names in
-  let ctx = emit_params (ctx_reserve_names lawful_names ctx) in
-  List.iter2
-    (fun name tr ->
-      emit_binder fmt name (fun () -> emit_lawful_type span ctx fmt tr))
-    lawful_names (PureUtils.generic_args_of_params generics).trait_refs;
-  (ctx, lawful_names)
+  if not has_params then (
+    (* No box: opening one past the maximum indentation breaks the line *)
+    F.pp_print_string fmt " :";
+    (ctx, lawful_names))
+  else (
+    (* The box of [<params> :], as in {!Extract.extract_fun_decl_gen} *)
+    F.pp_print_space fmt ();
+    F.pp_open_hovbox fmt 0;
+    let space = ref true in
+    let ctx = emit_params space (ctx_reserve_names lawful_names ctx) in
+    List.iter2
+      (fun name tr ->
+        emit_binder ctx fmt name (fun () -> emit_lawful_type span ctx fmt tr))
+      lawful_names (PureUtils.generic_args_of_params generics).trait_refs;
+    ExtractTypes.insert_req_space fmt space;
+    F.pp_print_string fmt ":";
+    F.pp_close_box fmt ();
+    (ctx, lawful_names))
 
-(** Emit the binders of the function [f]: its generic and value parameters, then
-    the Lawful binders of its trait clauses. Return the context with the
-    parameters registered, and the names of the Lawful binders. *)
+(** Emit the binders of the function [f], followed by [:]: its generic and value
+    parameters, then the Lawful binders of its trait clauses. Return the context
+    with the parameters registered, and the names of the Lawful binders. *)
 let emit_fun_binders (ctx : ExtractBase.extraction_ctx) fmt (f : Pure.fun_decl)
     =
   let sg = f.signature in
-  let space = ref false in
-  let ctx, lawful_names =
-    emit_binders_with_lawfuls f.item_meta.span ctx fmt f.item_meta.name
-      sg.llbc_generics sg.generics (fun ctx ->
-        let _, ctx, _ = Extract.extract_fun_parameters space ctx fmt f in
-        ctx)
-  in
-  ExtractTypes.insert_req_space fmt space;
-  (ctx, lawful_names)
+  emit_binders_with_lawfuls f.item_meta.span ctx fmt f.item_meta.name
+    sg.llbc_generics sg.generics
+    (sg.generics <> PureUtils.empty_generic_params || sg.inputs <> [])
+    (fun space ctx ->
+      let _, ctx, _ = Extract.extract_fun_parameters space ctx fmt f in
+      ctx)
 
-(** Emit the binders of the trait impl [impl] of the trait [d]: its generic
-    parameters, named as in its definition (see {!Extract.extract_trait_impl}),
-    then the Lawful binders of its trait clauses. Return the context with the
-    parameters registered. *)
+(** Emit the binders of the trait impl [impl] of the trait [d], followed by [:]:
+    its generic parameters, named as in its definition (see
+    {!Extract.extract_trait_impl}), then the Lawful binders of its trait
+    clauses. Return the context with the parameters registered. *)
 let emit_impl_binders (ctx : ExtractBase.extraction_ctx) fmt
     (d : Pure.trait_decl) (impl : Pure.trait_impl) =
   let open ExtractBase in
@@ -814,13 +826,14 @@ let emit_impl_binders (ctx : ExtractBase.extraction_ctx) fmt
   in
   fst
     (emit_binders_with_lawfuls span ctx fmt impl.item_meta.name
-       impl.llbc_generics impl.generics (fun ctx ->
+       impl.llbc_generics impl.generics
+       (impl.generics <> PureUtils.empty_generic_params) (fun space ctx ->
          let ctx, type_params, cg_params, trait_clauses =
            ctx_add_generic_params span impl.item_meta.name Item
              impl.llbc_generics impl.generics ctx
          in
          ExtractTypes.extract_generic_params span ctx fmt
-           Pure.TypeDeclId.Set.empty Item impl.generics
+           Pure.TypeDeclId.Set.empty ~space:(Some space) Item impl.generics
            (Some impl.explicit_info) type_params cg_params trait_clauses;
          ctx))
 
@@ -874,7 +887,8 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) =
           F.pp_print_string fmt
             (escape_name (spec_name (registered_fun_name ctx parent)));
           let ctx, _ = emit_fun_binders ctx fmt parent in
-          F.pp_print_string fmt ": Prop :=";
+          F.pp_print_space fmt ();
+          F.pp_print_string fmt "Prop :=";
           F.pp_close_box fmt ();
 
           (* Statement shape (the def body). *)
@@ -963,11 +977,10 @@ let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
           F.pp_print_space fmt ();
           F.pp_print_string fmt (escape_name (proof_name parent_name));
           let ctx, lawful_names = emit_fun_binders ctx fmt parent in
-          F.pp_print_string fmt ":";
           F.pp_print_space fmt ();
           (* The statement of correctness, in its own box:
              [<fn>.spec <generics> <args> <lawful args>]. *)
-          F.pp_open_hovbox fmt 0;
+          F.pp_open_hovbox fmt ctx.indent_incr;
           emit_app span ctx fmt explicit generics arg_texprs
             (escape_name (spec_name parent_name));
           List.iter
@@ -1002,10 +1015,8 @@ let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
                   (ctx_get_raw (Some span) (TraitImplId impl.def_id) ctx)));
           let ctx = emit_impl_binders ctx fmt d impl in
           F.pp_print_space fmt ();
-          F.pp_print_string fmt ":";
-          F.pp_print_space fmt ();
           (* [<X>.Lawful <args> (<impl> <args>)] *)
-          F.pp_open_hovbox fmt 0;
+          F.pp_open_hovbox fmt ctx.indent_incr;
           emit_lawful_type span ctx fmt
             {
               trait_id =
