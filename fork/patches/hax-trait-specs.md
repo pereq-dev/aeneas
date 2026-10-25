@@ -89,7 +89,8 @@ structure, diagnostics, limitations, proof recipes).
 
 ## Rebase notes
 
-- Depends on `hax-specs` and `core-models-lib`.
+- Depends on `hax-specs`, `core-models-lib` and
+  `trait-field-constructor-clash` (`check_trait_field_clash`).
 - The `tests/hax` outputs are produced by `cargo hax extract`: re-extract them
   with `make extract-hax` and re-check the proofs with
   `make verify-hax` (see `hax-specs`).
@@ -109,6 +110,8 @@ structure, diagnostics, limitations, proof recipes).
   continuations).
 - 2026-10-25: no Lawful obligations for the impls nested in decoration fns.
 - 2026-10-25: escaped Lawful binder names.
+- 2026-10-25: the Lawful field clash check reuses `check_trait_field_clash`
+  (`trait-field-constructor-clash`).
 - 2026-11-04: rebased on the 2026-11-02 dev; since upstream's move to
   OCaml 5.4+ (`Format` measures strings in code points), the buffer
   formatter of `ExtractSpec.skip_on_failure` measures them in bytes with

@@ -3252,8 +3252,9 @@ let extract_trait_decl_register_names (ctx : extraction_ctx)
   (* Lean: a field named like the constructor ([mk]) is invalid *)
   (if backend () = Lean then
      let cons_id = TraitDeclConstructorId trait_decl.def_id in
-     check_trait_field_clash trait_decl.item_meta.span ctx trait_decl cons_id
-       (ctx_get_raw (Some trait_decl.item_meta.span) cons_id ctx));
+     ignore
+       (check_trait_field_clash trait_decl.item_meta.span ctx trait_decl cons_id
+          (ctx_get_raw (Some trait_decl.item_meta.span) cons_id ctx)));
   ctx
 
 (** Similar to {!extract_type_decl_register_names} *)
