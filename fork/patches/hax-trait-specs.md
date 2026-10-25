@@ -44,6 +44,10 @@ structure, diagnostics, limitations, proof recipes).
 - An argument of a trait method that is not a variable in its precondition
   (e.g. `_`) is named after its type in its `Lawful` field, as in the
   functions with a body.
+- The impls nested in hax's decoration fns (the `Fn*` impls of the closures
+  of a contract) get no Lawful obligation.
+- Lawful binder names are built from the unescaped clause names, and escaped
+  when printed.
 
 ## Tests
 
@@ -59,11 +63,15 @@ structure, diagnostics, limitations, proof recipes).
   `RustM.holds_bool` simp lemma they use.
 - `tests/hax/src/specs/arguments.rs` (`UnitArg`, `UnnamedArg`): a unit
   argument and an unnamed argument (`_: u32`) of a trait method.
+- `tests/hax/src/specs/naming.rs` (`escaped_clause`): a Lawful binder name
+  that needs `«»`; `tests/hax/src/specs/contracts.rs` (`with_closure`): a
+  closure in a function body keeps its Lawful obligations.
 - `tests/src/hax-specs-no-core-models-lib.rs`: the `-specs hax` flag check.
 
 ## Rebase notes
 
-- Depends on `hax-specs` and `core-models-lib`.
+- Depends on `hax-specs`, `core-models-lib` and
+  `trait-field-constructor-clash` (`check_trait_field_clash`).
 - The `tests/hax` outputs are produced by `cargo hax extract`: re-extract them
   with `make extract-hax HAX_DIR=<hax checkout>` and re-check the proofs with
   `make verify-hax` (see `hax-specs`).
@@ -75,3 +83,7 @@ structure, diagnostics, limitations, proof recipes).
 - 2026-10-25: unit arguments of the trait methods are passed as `()` in the
   Lawful fields, and unnamed arguments are named after their type (they were
   named `«_»`).
+- 2026-10-25: layout of the output (symbols measured in code points, indented
+  continuations), no obligations for the impls nested in decoration fns,
+  escaped Lawful binder names; the Lawful field clash check reuses
+  `check_trait_field_clash` (`trait-field-constructor-clash`).

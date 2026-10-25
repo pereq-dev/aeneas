@@ -235,22 +235,6 @@ module Helpers = struct
       Option.fold ~some ~none:ctx f_opt
     in
     ctx |> reg pre |> reg post
-
-  (** The ids of the fields of the trait structure [d]: parent clauses,
-      associated constants and types, and methods *)
-  let trait_field_ids (d : Pure.trait_decl) : ExtractBase.id list =
-    List.map
-      (fun (c : Pure.trait_param) ->
-        ExtractBase.TraitParentClauseId (d.def_id, c.clause_id))
-      d.parent_clauses
-    @ List.map
-        (fun (id, _, _) -> ExtractBase.TraitConstId (d.def_id, id))
-        d.consts
-    @ List.map (fun (id, _) -> ExtractBase.TraitTypeId (d.def_id, id)) d.types
-    @ List.map
-        (fun (m : Pure.trait_method) ->
-          ExtractBase.TraitMethodId (d.def_id, m.method_id))
-        d.methods
 end
 
 open Helpers
@@ -376,21 +360,12 @@ let warn_untranslated ?(dropped = "the contract")
 
 (** Report a clash between [<X>.Lawful] and the projection of a field of the
     trait structure [d] (parent clause, associated item or method) named
-    [Lawful]: field names are registered without collision checks (see
-    {!ExtractBase.allow_collisions}). *)
+    [Lawful] *)
 let check_lawful_field_clash span (ctx : ExtractBase.extraction_ctx)
     (spec_id : Spec.SpecId.id) (d : Pure.trait_decl) : unit =
-  let open ExtractBase in
-  let get id = ctx_get_raw (Some span) id ctx in
-  let trait_name = get (TraitDeclId d.def_id) in
-  let lawful = lawful_name trait_name in
-  List.iter
-    (fun id ->
-      if ExtractBuiltin.flatten_name [ trait_name; get id ] = lawful then
-        report_name_collision
-          (fun id -> id_to_string (Some span) id ctx)
-          (id, Some span) (SpecId spec_id) (Some span) lawful)
-    (trait_field_ids d)
+  ExtractBase.check_trait_field_clash span ctx d (SpecId spec_id)
+    (lawful_name
+       (ExtractBase.ctx_get_raw (Some span) (TraitDeclId d.def_id) ctx))
 
 (** Register the names of the conditions and of the spec. Must be called after
     registering the crate items. Warns about the specs of untranslated items:
