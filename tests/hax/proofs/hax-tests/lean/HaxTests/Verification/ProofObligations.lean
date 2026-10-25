@@ -5,6 +5,7 @@ import CoreModels
 import HaxTests.Extraction.Types
 import HaxTests.Extraction.Funs
 import HaxTests.Extraction.Specs
+import HaxTests.Assumptions.OpaqueContracts
 import HaxTests.Verification.Lemmas
 import HaxTests.Verification.Traits.AssocConsts
 import HaxTests.Verification.Traits.AssocTypeBounds
@@ -312,6 +313,56 @@ theorem specs.arguments.before_other.spec.proof (_ : Unit) (y : Std.U32) :
   unfold specs.arguments.before_other.spec specs.arguments.before_other
   hax_mvcgen
   simp
+
+/- The obligations of the opaque functions are assumed
+(`Assumptions/OpaqueContracts.lean`), except that of `is_mult`, which is mapped
+to a model. -/
+
+theorem specs.opaque.incr.spec.proof (x : Std.U32) : specs.opaque.incr.spec x
+  := specs.opaque.incr.spec.assumption x
+
+theorem specs.opaque.call_incr.spec.proof (x : Std.U32) :
+  specs.opaque.call_incr.spec x
+  := by
+  unfold specs.opaque.call_incr.spec specs.opaque.call_incr
+  intro hx
+  have h := specs.opaque.incr.spec.proof x (by simp_all; scalar_tac)
+  mvcgen [h]
+
+theorem specs.opaque.min.spec.proof (x : Std.U32) (y : Std.U32) :
+  specs.opaque.min.spec x y
+  := specs.opaque.min.spec.assumption x y
+
+theorem specs.opaque.with_unit.spec.proof (_ : Unit) (y : Std.U32) :
+  specs.opaque.with_unit.spec () y
+  := specs.opaque.with_unit.spec.assumption () y
+
+theorem specs.opaque.zero.spec.proof : specs.opaque.zero.spec
+  := specs.opaque.zero.spec.assumption
+
+theorem specs.opaque.two_units.spec.proof (_ : Unit) (_ : Unit) :
+  specs.opaque.two_units.spec () ()
+  := specs.opaque.two_units.spec.assumption () ()
+
+theorem specs.opaque.unnamed.spec.proof (i : Std.U32) :
+  specs.opaque.unnamed.spec i
+  := specs.opaque.unnamed.spec.assumption i
+
+theorem specs.opaque.keep.spec.proof
+  {T : Type _} (corecloneCloneInst : core.clone.Clone T) (x : T)
+  (corecloneCloneInstLawful : core.clone.Clone.Lawful T corecloneCloneInst) :
+  specs.opaque.keep.spec corecloneCloneInst x corecloneCloneInstLawful
+  := specs.opaque.keep.spec.assumption corecloneCloneInst x
+    corecloneCloneInstLawful
+
+theorem specs.opaque.is_mult.spec.proof (x : Std.U32) (y : Std.U32) :
+  specs.opaque.is_mult.spec x y
+  := by
+  unfold specs.opaque.is_mult.spec ExternalModels.isMult
+  hax_mvcgen
+  · agrind
+  · agrind
+  · agrind
 
 theorem specs.naming.foo.spec.proof (x : Std.U32) : specs.naming.foo.spec x
   := by

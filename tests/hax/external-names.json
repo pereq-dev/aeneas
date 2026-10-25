@@ -1,0 +1,8 @@
+{
+  "functions": [
+    {
+      "rust_pattern": "hax_tests::specs::opaque::is_mult",
+      "extract_name": "ExternalModels.isMult"
+    }
+  ]
+}

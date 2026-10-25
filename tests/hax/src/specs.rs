@@ -16,3 +16,5 @@ mod mutual;
 mod traits;
 // Names like those of the generated items.
 mod naming;
+// Contracts of functions without a body.
+mod opaque;

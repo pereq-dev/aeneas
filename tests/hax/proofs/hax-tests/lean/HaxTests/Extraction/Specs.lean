@@ -7,6 +7,7 @@ public import Hax
 public import HaxTests.Extraction.Types
 public import HaxTests.Extraction.Funs
 public import HaxTests.Assumptions.MissingCore
+public import HaxTests.Assumptions.ExternalModels
 @[expose] public section
 open CoreModels Aeneas
 open Aeneas.Std hiding namespace core alloc
@@ -2388,6 +2389,146 @@ def specs.naming.foo.spec (x : Std.U32) : Prop :=
   ⦃ ⌜ True ⌝ ⦄
   specs.naming.foo x
   ⦃ ⇓ res => ⌜ (specs.naming.foo.post x res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::incr::pre]:
+    Source: 'src/specs/opaque.rs', lines 8:0-8:20 -/
+@[reducible]
+def specs.opaque.incr.pre (x : Std.U32) : RustM Bool := do
+  ok (x < 100#u32)
+
+/-- [hax_tests::specs::opaque::incr::post]:
+    Source: 'src/specs/opaque.rs', lines 9:0-9:31 -/
+@[reducible]
+def specs.opaque.incr.post (x : Std.U32) (result : Std.U32) : RustM Bool := do
+  ok (result > x)
+
+def specs.opaque.incr.spec (x : Std.U32) : Prop :=
+  (specs.opaque.incr.pre x).holds →
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.incr x
+  ⦃ ⇓ res => ⌜ (specs.opaque.incr.post x res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::call_incr::pre]:
+    Source: 'src/specs/opaque.rs', lines 15:0-15:19 -/
+@[reducible]
+def specs.opaque.call_incr.pre (x : Std.U32) : RustM Bool := do
+  ok (x < 10#u32)
+
+/-- [hax_tests::specs::opaque::call_incr::post]:
+    Source: 'src/specs/opaque.rs', lines 16:0-16:31 -/
+@[reducible]
+def specs.opaque.call_incr.post
+  (x : Std.U32) (result : Std.U32) : RustM Bool := do
+  ok (result > x)
+
+def specs.opaque.call_incr.spec (x : Std.U32) : Prop :=
+  (specs.opaque.call_incr.pre x).holds →
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.call_incr x
+  ⦃ ⇓ res => ⌜ (specs.opaque.call_incr.post x res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::min::post]:
+    Source: 'src/specs/opaque.rs', lines 23:0-23:32 -/
+@[reducible]
+def specs.opaque.min.post
+  (x : Std.U32) (y : Std.U32) (result : Std.U32) : RustM Bool := do
+  ok (result <= x)
+
+def specs.opaque.min.spec (x : Std.U32) (y : Std.U32) : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.min x y
+  ⦃ ⇓ res => ⌜ (specs.opaque.min.post x y res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::with_unit::pre]:
+    Source: 'src/specs/opaque.rs', lines 34:0-34:20 -/
+@[reducible]
+def specs.opaque.with_unit.pre (_ : Unit) (y : Std.U32) : RustM Bool := do
+  ok (y < 100#u32)
+
+/-- [hax_tests::specs::opaque::with_unit::post]:
+    Source: 'src/specs/opaque.rs', lines 35:0-35:32 -/
+@[reducible]
+def specs.opaque.with_unit.post
+  (_ : Unit) (y : Std.U32) (result : Std.U32) : RustM Bool := do
+  ok (result = y)
+
+def specs.opaque.with_unit.spec (_ : Unit) (y : Std.U32) : Prop :=
+  (specs.opaque.with_unit.pre () y).holds →
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.with_unit () y
+  ⦃ ⇓ res => ⌜ (specs.opaque.with_unit.post () y res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::zero::post]:
+    Source: 'src/specs/opaque.rs', lines 42:0-42:32 -/
+@[reducible]
+def specs.opaque.zero.post (result : Std.U32) : RustM Bool := do
+  ok (result = 0#u32)
+
+def specs.opaque.zero.spec : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.zero
+  ⦃ ⇓ res => ⌜ (specs.opaque.zero.post res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::two_units::post]:
+    Source: 'src/specs/opaque.rs', lines 49:0-49:20 -/
+@[reducible]
+def specs.opaque.two_units.post
+  (_ : Unit) (_ : Unit) (_ : Unit) : RustM Bool := do
+  ok true
+
+def specs.opaque.two_units.spec (_ : Unit) (_ : Unit) : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.two_units () ()
+  ⦃ ⇓ res => ⌜ (specs.opaque.two_units.post () () res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::unnamed::post]:
+    Source: 'src/specs/opaque.rs', lines 54:0-54:32 -/
+@[reducible]
+def specs.opaque.unnamed.post
+  (i : Std.U32) (result : Std.U32) : RustM Bool := do
+  ok (result = 0#u32)
+
+def specs.opaque.unnamed.spec (i : Std.U32) : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.unnamed i
+  ⦃ ⇓ res => ⌜ (specs.opaque.unnamed.post i res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::keep::post]:
+    Source: 'src/specs/opaque.rs', lines 61:0-61:20 -/
+@[reducible]
+def specs.opaque.keep.post
+  {T : Type _} (corecloneCloneInst : core.clone.Clone T) (x : T) (t : T) :
+  RustM Bool
+  := do
+  ok true
+
+def specs.opaque.keep.spec
+  {T : Type _} (corecloneCloneInst : core.clone.Clone T) (x : T)
+  (corecloneCloneInstLawful : core.clone.Clone.Lawful T corecloneCloneInst) :
+  Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  specs.opaque.keep corecloneCloneInst x
+  ⦃ ⇓ res => ⌜ (specs.opaque.keep.post corecloneCloneInst x res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::opaque::is_mult::pre]:
+    Source: 'src/specs/opaque.rs', lines 69:0-69:19 -/
+@[reducible]
+def specs.opaque.is_mult.pre (x : Std.U32) (y : Std.U32) : RustM Bool := do
+  ok (y != 0#u32)
+
+/-- [hax_tests::specs::opaque::is_mult::post]:
+    Source: 'src/specs/opaque.rs', lines 70:0-70:43 -/
+@[reducible]
+def specs.opaque.is_mult.post
+  (x : Std.U32) (y : Std.U32) (result : Bool) : RustM Bool := do
+  let i ← x % y
+  ok (result = (i = 0#u32))
+
+def specs.opaque.is_mult.spec (x : Std.U32) (y : Std.U32) : Prop :=
+  (specs.opaque.is_mult.pre x y).holds →
+  ⦃ ⌜ True ⌝ ⦄
+  ExternalModels.isMult x y
+  ⦃ ⇓ res => ⌜ (specs.opaque.is_mult.post x y res).holds ⌝ ⦄
 
 /-- [hax_tests::specs::arguments::{impl hax_tests::specs::arguments::Size for ()}::len::post]:
     Source: 'src/specs/arguments.rs', lines 12:4-12:24 -/

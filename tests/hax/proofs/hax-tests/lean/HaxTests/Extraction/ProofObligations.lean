@@ -7,6 +7,7 @@ public import HaxTests.Extraction.Types
 public import HaxTests.Extraction.Funs
 public import HaxTests.Extraction.Specs
 public import HaxTests.Assumptions.MissingCore
+public import HaxTests.Assumptions.ExternalModels
 @[expose] public section
 open CoreModels Aeneas
 open Aeneas.Std hiding namespace core alloc
@@ -508,6 +509,41 @@ theorem specs.mutual.is_odd.spec.proof (n : Std.U32) :
   := by sorry
 
 theorem specs.naming.foo.spec.proof (x : Std.U32) : specs.naming.foo.spec x
+  := by sorry
+
+theorem specs.opaque.incr.spec.proof (x : Std.U32) : specs.opaque.incr.spec x
+  := by sorry
+
+theorem specs.opaque.call_incr.spec.proof (x : Std.U32) :
+  specs.opaque.call_incr.spec x
+  := by sorry
+
+theorem specs.opaque.min.spec.proof (x : Std.U32) (y : Std.U32) :
+  specs.opaque.min.spec x y
+  := by sorry
+
+theorem specs.opaque.with_unit.spec.proof (_ : Unit) (y : Std.U32) :
+  specs.opaque.with_unit.spec () y
+  := by sorry
+
+theorem specs.opaque.zero.spec.proof : specs.opaque.zero.spec := by sorry
+
+theorem specs.opaque.two_units.spec.proof (_ : Unit) (_ : Unit) :
+  specs.opaque.two_units.spec () ()
+  := by sorry
+
+theorem specs.opaque.unnamed.spec.proof (i : Std.U32) :
+  specs.opaque.unnamed.spec i
+  := by sorry
+
+theorem specs.opaque.keep.spec.proof
+  {T : Type _} (corecloneCloneInst : core.clone.Clone T) (x : T)
+  (corecloneCloneInstLawful : core.clone.Clone.Lawful T corecloneCloneInst) :
+  specs.opaque.keep.spec corecloneCloneInst x corecloneCloneInstLawful
+  := by sorry
+
+theorem specs.opaque.is_mult.spec.proof (x : Std.U32) (y : Std.U32) :
+  specs.opaque.is_mult.spec x y
   := by sorry
 
 theorem Tuple.Insts.Hax_testsSpecsArgumentsSize.len.spec.proof (_ : Unit) :
