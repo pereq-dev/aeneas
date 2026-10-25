@@ -97,6 +97,8 @@ structure, diagnostics, limitations, proof recipes).
 - 2026-10-25: unit arguments of the trait methods are passed as `()` in the
   Lawful fields, and unnamed arguments are named after their type (they were
   named `«_»`).
+- 2026-10-25: layout of the output (symbols measured in code points, indented
+  continuations).
 - 2026-11-04: rebased on the 2026-11-02 dev; since upstream's move to
   OCaml 5.4+ (`Format` measures strings in code points), the buffer
   formatter of `ExtractSpec.skip_on_failure` measures them in bytes with
