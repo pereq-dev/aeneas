@@ -297,8 +297,21 @@ let lawful_name (trait_name : string) : string =
   ExtractBuiltin.flatten_name [ trait_name; "Lawful" ]
 
 (** [<clause>Lawful]: the name of the Lawful binder (or parent field) of the
-    clause [clause_name] *)
+    clause [clause_name]. Both names are unescaped. *)
 let lawful_binder_name (clause_name : string) : string = clause_name ^ "Lawful"
+
+(** The names of the Lawful binders of the trait clauses [clauses], bound at
+    [origin] and registered in [ctx] *)
+let lawful_binder_names span (ctx : ExtractBase.extraction_ctx)
+    (origin : ExtractBase.generic_origin) (clauses : Pure.trait_param list) :
+    string list =
+  List.map
+    (fun (c : Pure.trait_param) ->
+      lawful_binder_name
+        (ExtractBase.ctx_get_raw (Some span)
+           (LocalTraitClauseId (origin, c.clause_id))
+           ctx))
+    clauses
 
 (** The names of the conditions [pre] and [post] of [parent_name] *)
 let cond_names (parent_name : string) ~(pre : Pure.fun_decl option)
@@ -609,13 +622,16 @@ let emit_lawful_clause_binders span (ctx : ExtractBase.extraction_ctx) fmt
   List.iter2
     (fun (c : Pure.trait_param) tr ->
       let name =
-        ExtractBase.ctx_get_local_trait_clause span origin c.clause_id ctx
+        ExtractBase.ctx_get_raw (Some span)
+          (LocalTraitClauseId (origin, c.clause_id))
+          ctx
       in
-      emit_binder ctx fmt name (fun () ->
+      emit_binder ctx fmt (ExtractBase.escape_name name) (fun () ->
           ExtractTypes.extract_trait_clause_type span ctx fmt
             Pure.TypeDeclId.Set.empty c);
-      emit_binder ctx fmt (lawful_binder_name name) (fun () ->
-          emit_lawful_type span ctx fmt tr))
+      emit_binder ctx fmt
+        (ExtractBase.escape_name (lawful_binder_name name))
+        (fun () -> emit_lawful_type span ctx fmt tr))
     clauses args.trait_refs
 
 (** Emit the [Lawful] structure of the trait [d], whose annotated methods are
@@ -703,13 +719,15 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
         | None -> [%internal_error] span
       in
       let sg = m.signature in
-      let ctx, type_params, cg_params, clause_names =
+      let ctx, type_params, cg_params, _ =
         ctx_add_generic_params span m.item_meta.name Method sg.llbc_generics
           sg.generics ctx
       in
       (* The names of the Lawful binders of the clauses *)
       let ctx =
-        ctx_reserve_names (List.map lawful_binder_name clause_names) ctx
+        ctx_reserve_names
+          (lawful_binder_names span ctx Method sg.generics.trait_clauses)
+          ctx
       in
       let ctx = add_conditions ctx ~pre ~post in
       let _, fresh_fvar_id = Pure.FVarId.fresh_stateful_generator () in
@@ -764,7 +782,7 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
     [:]: [emit_params] emits its parameters, if [has_params], and registers them
     (see {!ExtractTypes.insert_req_space} for [space]), then we emit the Lawful
     binders of its trait clauses. Return the context with the parameters
-    registered, and the names of the Lawful binders. *)
+    registered, and the (unescaped) names of the Lawful binders. *)
 let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
     (name : Types.name) (llbc_generics : Types.generic_params)
     (generics : Pure.generic_params) (has_params : bool)
@@ -774,10 +792,12 @@ let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
   (* Reserve the Lawful names, so that no parameter takes them. The clause
      names are those [emit_params] computes: they end with [Inst] (and an
      index), so the reserved names cannot change them. *)
-  let _, _, _, clause_names =
-    ctx_add_generic_params span name Item llbc_generics generics ctx
+  let lawful_names =
+    let ctx, _, _, _ =
+      ctx_add_generic_params span name Item llbc_generics generics ctx
+    in
+    lawful_binder_names span ctx Item generics.trait_clauses
   in
-  let lawful_names = List.map lawful_binder_name clause_names in
   if not has_params then (
     (* No box: opening one past the maximum indentation breaks the line *)
     F.pp_print_string fmt " :";
@@ -790,7 +810,8 @@ let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
     let ctx = emit_params space (ctx_reserve_names lawful_names ctx) in
     List.iter2
       (fun name tr ->
-        emit_binder ctx fmt name (fun () -> emit_lawful_type span ctx fmt tr))
+        emit_binder ctx fmt (escape_name name) (fun () ->
+            emit_lawful_type span ctx fmt tr))
       lawful_names (PureUtils.generic_args_of_params generics).trait_refs;
     ExtractTypes.insert_req_space fmt space;
     F.pp_print_string fmt ":";
@@ -799,7 +820,8 @@ let emit_binders_with_lawfuls span (ctx : ExtractBase.extraction_ctx) fmt
 
 (** Emit the binders of the function [f], followed by [:]: its generic and value
     parameters, then the Lawful binders of its trait clauses. Return the context
-    with the parameters registered, and the names of the Lawful binders. *)
+    with the parameters registered, and the (unescaped) names of the Lawful
+    binders. *)
 let emit_fun_binders (ctx : ExtractBase.extraction_ctx) fmt (f : Pure.fun_decl)
     =
   let sg = f.signature in
@@ -986,7 +1008,7 @@ let emit_obligation ctx fmt (o : HaxSpecs.obligation) =
           List.iter
             (fun name ->
               F.pp_print_space fmt ();
-              F.pp_print_string fmt name)
+              F.pp_print_string fmt (escape_name name))
             lawful_names;
           F.pp_close_box fmt ();
           F.pp_close_box fmt ();

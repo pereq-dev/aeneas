@@ -673,6 +673,38 @@ def specs.naming.lawful_impl_binder.Wrap.Insts.Hax_testsSpecsNamingQux
     QuxInst
 }
 
+/-- [hax_tests::specs::naming::escaped_clause::f]:
+    Source: 'src/specs/naming.rs', lines 91:4-93:5
+    Visibility: public -/
+def specs.naming.escaped_clause.f
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  (t : T) (x : Std.U32) :
+  RustM Std.U32
+  := do
+  ok x
+
+/-- [hax_tests::specs::naming::escaped_clause::{impl hax_tests::specs::naming::escaped_clause::Neg<0i32> for hax_tests::specs::naming::escaped_clause::W<T>}::get]:
+    Source: 'src/specs/naming.rs', lines 104:8-106:9
+    Visibility: public -/
+def
+  specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0.get
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  (self : specs.naming.escaped_clause.W T) :
+  RustM Std.I32
+  := do
+  ok 0#i32
+
+/-- Trait implementation: [hax_tests::specs::naming::escaped_clause::{impl hax_tests::specs::naming::escaped_clause::Neg<0i32> for hax_tests::specs::naming::escaped_clause::W<T>}]
+    Source: 'src/specs/naming.rs', lines 103:4-107:5 -/
+@[reducible]
+def specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32) :
+  specs.naming.escaped_clause.Neg (specs.naming.escaped_clause.W T) 0#i32 := {
+  get :=
+    specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0.get
+    «NegT-1Inst»
+}
+
 /-- [hax_tests::specs::traits::assoc_consts::Bounded::MIN]
     Source: 'src/specs/traits/assoc_consts.rs', lines 13:4-13:23 -/
 @[global_simps, irreducible, trait_default]

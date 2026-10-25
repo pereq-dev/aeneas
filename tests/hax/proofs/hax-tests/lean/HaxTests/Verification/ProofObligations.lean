@@ -88,6 +88,17 @@ theorem
   (specs.naming.lawful_impl_binder.Wrap.Insts.Hax_testsSpecsNamingQux QuxInst)
   := ⟨⟩
 
+theorem
+  specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0.Lawful
+  {T : Type} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  («NegT-1InstLawful» : specs.naming.escaped_clause.Neg.Lawful T (-1)#i32
+    «NegT-1Inst») :
+  specs.naming.escaped_clause.Neg.Lawful (specs.naming.escaped_clause.W T)
+    0#i32
+    (specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0
+    «NegT-1Inst»)
+  := ⟨⟩
+
 theorem specs.contracts.only_requires.spec.proof (x : Std.U32) :
   specs.contracts.only_requires.spec x
   := by
@@ -316,6 +327,17 @@ theorem specs.naming.lawful_binder.f.spec.proof {T : Type} (QuxInst : specs.nami
   := by
   unfold specs.naming.lawful_binder.f.spec specs.naming.lawful_binder.f
   hax_mvcgen [specs.naming.lawful_binder.f.post]
+  simp
+
+theorem specs.naming.escaped_clause.f.spec.proof {T : Type}
+  («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32) (t : T)
+  (x : Std.U32)
+  («NegT-1InstLawful» : specs.naming.escaped_clause.Neg.Lawful T (-1)#i32
+    «NegT-1Inst») :
+  specs.naming.escaped_clause.f.spec «NegT-1Inst» t x «NegT-1InstLawful»
+  := by
+  unfold specs.naming.escaped_clause.f.spec specs.naming.escaped_clause.f
+  hax_mvcgen [specs.naming.escaped_clause.f.post]
   simp
 
 theorem specs.generics.MyStruct.build.spec.proof (N : Std.Usize)

@@ -69,6 +69,17 @@ theorem
     QuxInst)
   := by sorry
 
+theorem
+  specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0.Lawful
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  («NegT-1InstLawful» : specs.naming.escaped_clause.Neg.Lawful T (-1)#i32
+    «NegT-1Inst») :
+  specs.naming.escaped_clause.Neg.Lawful (specs.naming.escaped_clause.W T)
+    0#i32
+    (specs.naming.escaped_clause.W.Insts.Hax_testsSpecsNamingEscaped_clauseNeg0
+    «NegT-1Inst»)
+  := by sorry
+
 theorem U32.Insts.Hax_testsSpecsTraitsAssoc_constsBounded.Lawful :
   specs.traits.assoc_consts.Bounded.Lawful Std.U32
     U32.Insts.Hax_testsSpecsTraitsAssoc_constsBounded
@@ -644,6 +655,14 @@ theorem specs.naming.lawful_binder.f.spec.proof
   {T : Type _} (QuxInst : specs.naming.Qux T) (QuxInstLawful1 : T)
   (x : Std.U32) (QuxInstLawful : specs.naming.Qux.Lawful T QuxInst) :
   specs.naming.lawful_binder.f.spec QuxInst QuxInstLawful1 x QuxInstLawful
+  := by sorry
+
+theorem specs.naming.escaped_clause.f.spec.proof
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  (t : T) (x : Std.U32)
+  («NegT-1InstLawful» : specs.naming.escaped_clause.Neg.Lawful T (-1)#i32
+    «NegT-1Inst») :
+  specs.naming.escaped_clause.f.spec «NegT-1Inst» t x «NegT-1InstLawful»
   := by sorry
 
 theorem specs.traits.generic_impl.Wrapper.get.spec.proof

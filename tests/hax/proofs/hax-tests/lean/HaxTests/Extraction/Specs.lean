@@ -186,6 +186,50 @@ structure specs.naming.lawful_field.Sub.Lawful (Self : Type _) (QuxInstLawful1
       ⌜ (specs.naming.lawful_field.Sub.h.post SubInst.QuxInst SubInst self_ x
           res).holds ⌝ ⦄
 
+/-- Lawful structure of trait: [hax_tests::specs::naming::escaped_clause::Neg]
+    Source: 'src/specs/naming.rs', lines 86:4-88:5 -/
+structure specs.naming.escaped_clause.Neg.Lawful (Self : Type _) (N : Std.I32)
+  (NegInst : specs.naming.escaped_clause.Neg Self N) : Prop
+
+/-- [hax_tests::specs::naming::escaped_clause::UseNeg::g::pre]:
+    Source: 'src/specs/naming.rs', lines 95:4-95:26 -/
+@[reducible]
+def specs.naming.escaped_clause.UseNeg.g.pre
+  {Self_ : Type _} {T : Type _} («NegT-1Inst» :
+  specs.naming.escaped_clause.Neg T (-1)#i32) (UseNegInst :
+  specs.naming.escaped_clause.UseNeg Self_) (self_ : Self_) (t : T) :
+  RustM Bool
+  := do
+  ok true
+
+/-- [hax_tests::specs::naming::escaped_clause::UseNeg::g::post]:
+    Source: 'src/specs/naming.rs', lines 98:8-98:46 -/
+@[reducible]
+def specs.naming.escaped_clause.UseNeg.g.post
+  {Self_ : Type _} {T : Type _} («NegT-1Inst» :
+  specs.naming.escaped_clause.Neg T (-1)#i32) (UseNegInst :
+  specs.naming.escaped_clause.UseNeg Self_) (self_ : Self_) (t : T)
+  (res : Std.U32) :
+  RustM Bool
+  := do
+  ok true
+
+/-- Lawful structure of trait: [hax_tests::specs::naming::escaped_clause::UseNeg]
+    Source: 'src/specs/naming.rs', lines 96:4-99:5 -/
+structure specs.naming.escaped_clause.UseNeg.Lawful (Self : Type _) (UseNegInst
+  : specs.naming.escaped_clause.UseNeg Self) : Prop where
+  g_spec {T : Type}
+    («NegP-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+    («NegP-1InstLawful» : specs.naming.escaped_clause.Neg.Lawful T (-1)#i32
+      «NegP-1Inst») (self_ : Self) (t : T) :
+    (specs.naming.escaped_clause.UseNeg.g.pre «NegP-1Inst» UseNegInst self_
+      t).holds →
+    ⦃ ⌜ True ⌝ ⦄
+    UseNegInst.g «NegP-1Inst» self_ t
+    ⦃ ⇓ res =>
+      ⌜ (specs.naming.escaped_clause.UseNeg.g.post «NegP-1Inst» UseNegInst
+          self_ t res).holds ⌝ ⦄
+
 /-- [hax_tests::specs::traits::assoc_consts::Bounded::clamp::pre]:
     Source: 'src/specs/traits/assoc_consts.rs', lines 8:0-8:22 -/
 @[reducible]
@@ -2814,6 +2858,26 @@ def specs.naming.lawful_binder.f.spec
   ⦃ ⇓ res =>
     ⌜ (specs.naming.lawful_binder.f.post QuxInst QuxInstLawful1 x
         res).holds ⌝ ⦄
+
+/-- [hax_tests::specs::naming::escaped_clause::f::post]:
+    Source: 'src/specs/naming.rs', lines 90:4-90:36 -/
+@[reducible]
+def specs.naming.escaped_clause.f.post
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  (t : T) (x : Std.U32) (result : Std.U32) :
+  RustM Bool
+  := do
+  ok (result = x)
+
+def specs.naming.escaped_clause.f.spec
+  {T : Type _} («NegT-1Inst» : specs.naming.escaped_clause.Neg T (-1)#i32)
+  (t : T) (x : Std.U32)
+  («NegT-1InstLawful» : specs.naming.escaped_clause.Neg.Lawful T (-1)#i32
+    «NegT-1Inst») : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  specs.naming.escaped_clause.f «NegT-1Inst» t x
+  ⦃ ⇓ res =>
+    ⌜ (specs.naming.escaped_clause.f.post «NegT-1Inst» t x res).holds ⌝ ⦄
 
 /-- [hax_tests::specs::traits::generic_impl::{hax_tests::specs::traits::generic_impl::Wrapper<T>}::get::post]:
     Source: 'src/specs/traits/generic_impl.rs', lines 70:4-70:31 -/
