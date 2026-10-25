@@ -76,3 +76,33 @@ pub mod lawful_field {
         fn h(&self, x: g_spec) -> u32;
     }
 }
+
+// The name of the clause `T: Neg<-1>` contains a `-`: the clause binders and
+// their Lawful binders are written with `«»`, in a fn spec, a Lawful structure
+// field and an impl theorem.
+pub mod escaped_clause {
+    use hax_lib::*;
+
+    pub trait Neg<const N: i32> {
+        fn get(&self) -> i32;
+    }
+
+    #[ensures(|result| result == x)]
+    pub fn f<T: Neg<-1>>(t: &T, x: u32) -> u32 {
+        x
+    }
+
+    #[hax_lib::attributes]
+    pub trait UseNeg {
+        #[requires(true)]
+        fn g<T: Neg<-1>>(&self, t: &T) -> u32;
+    }
+
+    pub struct W<T>(T);
+
+    impl<T: Neg<-1>> Neg<0> for W<T> {
+        fn get(&self) -> i32 {
+            0
+        }
+    }
+}

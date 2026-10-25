@@ -134,6 +134,25 @@ structure specs.naming.lawful_field.Sub (Self : Type _) (QuxInstLawful :
   g : Self → QuxInstLawful → RustM Std.U32
   h : Self → g_spec → RustM Std.U32
 
+/-- Trait declaration: [hax_tests::specs::naming::escaped_clause::Neg]
+    Source: 'src/specs/naming.rs', lines 86:4-88:5
+    Visibility: public -/
+structure specs.naming.escaped_clause.Neg (Self : Type _) (N : Std.I32) where
+  get : Self → RustM Std.I32
+
+/-- Trait declaration: [hax_tests::specs::naming::escaped_clause::UseNeg]
+    Source: 'src/specs/naming.rs', lines 96:4-99:5
+    Visibility: public -/
+structure specs.naming.escaped_clause.UseNeg (Self : Type _) where
+  g : forall {T : Type} («NegP-1Inst» : specs.naming.escaped_clause.Neg T
+    (-1)#i32), Self → T → RustM Std.U32
+
+/-- [hax_tests::specs::naming::escaped_clause::W]
+    Source: 'src/specs/naming.rs', lines 101:4-101:23
+    Visibility: public -/
+@[reducible]
+def specs.naming.escaped_clause.W (T : Type _) := T
+
 /-- Trait declaration: [hax_tests::specs::traits::assoc_consts::Bounded]
     Source: 'src/specs/traits/assoc_consts.rs', lines 9:0-18:1 -/
 structure specs.traits.assoc_consts.Bounded (Self : Type _) where

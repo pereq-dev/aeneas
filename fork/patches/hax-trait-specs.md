@@ -58,6 +58,8 @@ structure, diagnostics, limitations, proof recipes).
   functions with a body.
 - The impls nested in hax's decoration fns (the `Fn*` impls of the closures
   of a contract) get no Lawful obligation.
+- Lawful binder names are built from the unescaped clause names, and escaped
+  when printed.
 
 ## Tests
 
@@ -75,6 +77,8 @@ structure, diagnostics, limitations, proof recipes).
   argument and an unnamed argument (`_: u32`) of a trait method.
 - `tests/hax/src/specs/contracts.rs` (`with_closure`): a closure in a function
   body keeps its Lawful obligations.
+- `tests/hax/src/specs/naming.rs` (`escaped_clause`): a Lawful binder name
+  that needs `«»`.
 - `tests/src/hax-specs-no-core-models-lib.rs`: the `-specs hax` flag check.
 - `tests/hax/failures/clash_lawful`: the associated constant `Lawful` of a
   trait `Foo` clashes with the generated `Foo.Lawful` (fatal).
@@ -104,6 +108,7 @@ structure, diagnostics, limitations, proof recipes).
 - 2026-10-25: layout of the output (symbols measured in code points, indented
   continuations).
 - 2026-10-25: no Lawful obligations for the impls nested in decoration fns.
+- 2026-10-25: escaped Lawful binder names.
 - 2026-11-04: rebased on the 2026-11-02 dev; since upstream's move to
   OCaml 5.4+ (`Format` measures strings in code points), the buffer
   formatter of `ExtractSpec.skip_on_failure` measures them in bytes with
