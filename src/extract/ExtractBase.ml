@@ -876,6 +876,31 @@ let ctx_get_trait_parent_clause (span : Meta.span) (id : trait_decl_id)
     (clause : trait_clause_id) (ctx : extraction_ctx) : string =
   ctx_get (Some span) (TraitParentClauseId (id, clause)) ctx
 
+(** Report a clash between the name [name] of [id] and the projection of a field
+    of the trait structure [d] (parent clause, associated item or method): field
+    names are registered without collision checks (see {!allow_collisions}) *)
+let check_trait_field_clash (span : Meta.span) (ctx : extraction_ctx)
+    (d : trait_decl) (id : id) (name : string) : unit =
+  let get id = ctx_get_raw (Some span) id ctx in
+  let trait_name = get (TraitDeclId d.def_id) in
+  let fields =
+    List.map
+      (fun (c : trait_param) -> TraitParentClauseId (d.def_id, c.clause_id))
+      d.parent_clauses
+    @ List.map (fun (id, _, _) -> TraitConstId (d.def_id, id)) d.consts
+    @ List.map (fun (id, _) -> TraitTypeId (d.def_id, id)) d.types
+    @ List.map
+        (fun (m : trait_method) -> TraitMethodId (d.def_id, m.method_id))
+        d.methods
+  in
+  List.iter
+    (fun field ->
+      if flatten_name [ trait_name; get field ] = name then
+        report_name_collision
+          (fun id -> id_to_string (Some span) id ctx)
+          (field, Some span) id (Some span) name)
+    fields
+
 let ctx_get_var (span : Meta.span) (id : FVarId.id) (ctx : extraction_ctx) :
     string =
   ctx_get (Some span) (FVarId id) ctx
