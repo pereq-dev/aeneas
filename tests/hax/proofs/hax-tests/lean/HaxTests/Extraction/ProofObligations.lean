@@ -546,6 +546,10 @@ theorem specs.opaque.is_mult.spec.proof (x : Std.U32) (y : Std.U32) :
   specs.opaque.is_mult.spec x y
   := by sorry
 
+theorem specs.opaque.is_zero.spec.proof (x : Std.U32) :
+  specs.opaque.is_zero.spec x
+  := by sorry
+
 theorem Tuple.Insts.Hax_testsSpecsArgumentsSize.len.spec.proof (_ : Unit) :
   Tuple.Insts.Hax_testsSpecsArgumentsSize.len.spec ()
   := by sorry

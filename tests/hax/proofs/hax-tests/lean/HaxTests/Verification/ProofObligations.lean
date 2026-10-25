@@ -315,8 +315,8 @@ theorem specs.arguments.before_other.spec.proof (_ : Unit) (y : Std.U32) :
   simp
 
 /- The obligations of the opaque functions are assumed
-(`Assumptions/OpaqueContracts.lean`), except that of `is_mult`, which is mapped
-to a model. -/
+(`Assumptions/OpaqueContracts.lean`), except those of `is_mult` and `is_zero`,
+which are mapped to models. -/
 
 theorem specs.opaque.incr.spec.proof (x : Std.U32) : specs.opaque.incr.spec x
   := specs.opaque.incr.spec.assumption x
@@ -363,6 +363,13 @@ theorem specs.opaque.is_mult.spec.proof (x : Std.U32) (y : Std.U32) :
   · agrind
   · agrind
   · agrind
+
+theorem specs.opaque.is_zero.spec.proof (x : Std.U32) :
+  specs.opaque.is_zero.spec x
+  := by
+  unfold specs.opaque.is_zero.spec ExternalModels.isZero
+  hax_mvcgen
+  simp
 
 theorem specs.naming.foo.spec.proof (x : Std.U32) : specs.naming.foo.spec x
   := by

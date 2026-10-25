@@ -54,6 +54,9 @@ structure, diagnostics, limitations, proof recipes).
   (or else of the postcondition). A function mapped by `-external-names`
   (patch `external-names`) is applied by its external name, but its generated
   names are those of the Rust function.
+- The triple of a spec is about a monadic program: the call of a function
+  that cannot fail (e.g. mapped by `-external-names` with
+  `"can_fail": false`) is wrapped in `ok`.
 
 ## Tests
 
@@ -78,7 +81,8 @@ structure, diagnostics, limitations, proof recipes).
   trait clause), assumed in
   `Assumptions/OpaqueContracts.lean`; `is_mult` is mapped by
   `tests/hax/external-names.json` to `Assumptions/ExternalModels.lean`, and its
-  obligation proved against the model.
+  obligation proved against the model; so is `is_zero`, mapped with
+  `"can_fail": false` to a non-monadic model.
 
 ## Rebase notes
 
@@ -109,3 +113,5 @@ structure, diagnostics, limitations, proof recipes).
   take their arguments from the signature (they applied the function to no
   argument); under an external name, they keep the names of the Rust
   function.
+- 2026-10-25: the spec of a function that cannot fail (`"can_fail": false`
+  in `-external-names`) wraps its call in `ok` (the triple was ill-typed).

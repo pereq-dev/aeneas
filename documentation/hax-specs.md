@@ -94,6 +94,8 @@ theorem both.spec.proof (x : Std.U32) :
   with `-external-names` (the generated names are still those of the Rust
   function). The obligation about an axiom cannot be proved: assume it (e.g.
   as an `axiom`).
+- A function mapped with `"can_fail": false` has a non-monadic type: the
+  triple is about `ok (<fn> <args>)`.
 
 ### Trait contracts and `X.Lawful`
 

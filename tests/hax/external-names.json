@@ -3,6 +3,11 @@
     {
       "rust_pattern": "hax_tests::specs::opaque::is_mult",
       "extract_name": "ExternalModels.isMult"
+    },
+    {
+      "rust_pattern": "hax_tests::specs::opaque::is_zero",
+      "extract_name": "ExternalModels.isZero",
+      "can_fail": false
     }
   ]
 }

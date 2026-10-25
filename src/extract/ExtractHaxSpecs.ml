@@ -510,9 +510,10 @@ let register_obligation_names (ctx : ExtractBase.extraction_ctx)
       ⦃ ⇓ res => ⌜ (foo.post args res).holds ⌝ ⦄
     ]}
     [head] is the function applied ([foo]), and [generics] the generics from
-    which those of the conditions are computed. *)
+    which those of the conditions are computed. If [foo] cannot fail
+    ([can_fail = false]), the program is [ok (foo args)]. *)
 let emit_statement ctx fmt span (head : Pure.texpr) generics output_ty
-    arg_texprs res_id ~(pre : Pure.fun_decl option)
+    arg_texprs res_id ~(can_fail : bool) ~(pre : Pure.fun_decl option)
     ~(post : Pure.fun_decl option) =
   let open ExtractBase in
   (* Register the postcondition's result variable *)
@@ -531,10 +532,19 @@ let emit_statement ctx fmt span (head : Pure.texpr) generics output_ty
   line ctx fmt (fun () ->
       emit_wp fmt (fun () -> emit_pure (fun () -> F.pp_print_string fmt "True")));
 
-  (* The real function application [<fn> <args>], via the standard printer. *)
+  (* The real function application [<fn> <args>], via the standard printer,
+     wrapped in [ok] if the function cannot fail (its type is not monadic, e.g.
+     for a function mapped by [-external-names] with ["can_fail": false]). *)
   line ctx fmt (fun () ->
-      Extract.extract_App span ctx fmt ~inside:false ~inside_do:false head
-        arg_texprs output_ty);
+      if can_fail then
+        Extract.extract_App span ctx fmt ~inside:false ~inside_do:false head
+          arg_texprs output_ty
+      else
+        Extract.extract_texpr span ctx fmt ~inside:false ~inside_do:false
+          (PureUtils.mk_result_ok_texpr span
+             ([%add_loc] PureUtils.mk_qualif_apps span
+                (PureUtils.as_qualif span head)
+                arg_texprs output_ty)));
 
   (* The triple postcondition: [(<fn>.post <args> res).holds], or [True] when
      the function has no postcondition. The closing delimiters are printed in
@@ -763,14 +773,14 @@ let emit_lawful_structure (ctx : ExtractBase.extraction_ctx) fmt
           ty = sg.output;
         }
       in
+      let can_fail = sg.fwd_info.effect_info.can_fail in
       let output =
-        if sg.fwd_info.effect_info.can_fail then
-          PureUtils.unwrap_result_ty span sg.output
+        if can_fail then PureUtils.unwrap_result_ty span sg.output
         else sg.output
       in
       emit_statement ctx fmt span head
         (method_generics d self_ref sg)
-        output args (fresh_fvar_id ()) ~pre ~post;
+        output args (fresh_fvar_id ()) ~can_fail ~pre ~post;
       F.pp_close_box fmt ())
     methods;
   F.pp_close_box fmt ()
@@ -927,7 +937,8 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) =
           (* Statement shape (the def body). *)
           emit_statement ctx fmt span
             (fun_head fn generics sg.output)
-            generics sg.output arg_texprs res_id ~pre ~post;
+            generics sg.output arg_texprs res_id
+            ~can_fail:sg.fwd_info.effect_info.can_fail ~pre ~post;
           F.pp_close_box fmt ();
           (* inner vbox *)
           F.pp_close_box fmt ();

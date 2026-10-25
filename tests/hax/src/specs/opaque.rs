@@ -71,3 +71,11 @@ fn keep<T: Clone>(x: T) -> T {
 fn is_mult(x: u32, y: u32) -> bool {
     x % y == 0
 }
+
+// Mapped to `ExternalModels.isZero`, which cannot fail (`"can_fail": false` in
+// `external-names.json`): the spec wraps its call in `ok`
+#[hax_lib::opaque]
+#[ensures(|result| result == (x == 0))]
+fn is_zero(x: u32) -> bool {
+    x == 0
+}

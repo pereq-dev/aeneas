@@ -2530,6 +2530,17 @@ def specs.opaque.is_mult.spec (x : Std.U32) (y : Std.U32) : Prop :=
   ExternalModels.isMult x y
   ⦃ ⇓ res => ⌜ (specs.opaque.is_mult.post x y res).holds ⌝ ⦄
 
+/-- [hax_tests::specs::opaque::is_zero::post]:
+    Source: 'src/specs/opaque.rs', lines 78:0-78:39 -/
+@[reducible]
+def specs.opaque.is_zero.post (x : Std.U32) (result : Bool) : RustM Bool := do
+  ok (result = (x = 0#u32))
+
+def specs.opaque.is_zero.spec (x : Std.U32) : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  ok (ExternalModels.isZero x)
+  ⦃ ⇓ res => ⌜ (specs.opaque.is_zero.post x res).holds ⌝ ⦄
+
 /-- [hax_tests::specs::arguments::{impl hax_tests::specs::arguments::Size for ()}::len::post]:
     Source: 'src/specs/arguments.rs', lines 12:4-12:24 -/
 @[reducible]
