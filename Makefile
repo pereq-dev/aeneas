@@ -68,7 +68,8 @@ build-bin: check-charon
 	cd src && dune build
 
 .PHONY: build-lib
-build-lib: check-charon
+# After `build-bin`: two `dune build` in `src` can't run concurrently (`make -j`)
+build-lib: check-charon build-bin
 	cd src && dune build aeneas.cmxs
 
 .PHONY: build-runner
