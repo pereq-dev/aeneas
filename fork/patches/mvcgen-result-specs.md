@@ -14,7 +14,12 @@ Makes `Std.Do`'s `mvcgen` usable on Aeneas programs (fork PRs #18, #31):
   blocks;
 - lemmas relating triples to `ok` (`triple_post_eq_iff_eq`,
   `triple_iff_exists_ok`, `triple_with_self`, `triple_in_hypothesis`). These
-  are used by rust-core-models proofs.
+  are used by rust-core-models proofs;
+- lemmas on the triples of proposition-valued programs, with postcondition
+  `⇓ p => ⌜ p ⌝` (hax's `RustM.holds`): `triple_prop_bind_iff`,
+  `triple_prop_pure_iff` and `triple_prop_map_eq_true_iff` (`@[simp]`, for
+  `RustM Bool` conditions). `simp` cannot use `triple_iff_exists_ok` on this
+  shape (it cannot infer the postcondition).
 
 ## Invariants
 
@@ -25,7 +30,8 @@ Makes `Std.Do`'s `mvcgen` usable on Aeneas programs (fork PRs #18, #31):
   (`⇓?`) correctness.
 - No raw `Q.2.…` projections outside the accessor definitions.
 - The specs and triple lemmas are universe-polymorphic (`Type u`), like the
-  code Aeneas extracts (`Type _` binders since upstream #1412). In
+  code Aeneas extracts (`Type _` binders since upstream #1412), except the
+  `triple_prop_*` lemmas, about `RustM Prop` (in `Type`). In
   `loop_spec`, the state and result types share one universe: the body's
   triple is stated at `ControlFlow α β`, and its post-shape must be the
   same as `P`'s.
@@ -37,6 +43,8 @@ Makes `Std.Do`'s `mvcgen` usable on Aeneas programs (fork PRs #18, #31):
   `triple_iff_exists_ok`, and the same on values in `Type 1` (with the lemmas
   stated for `Type`, the `triple_iff_exists_ok` and `loop_spec` examples
   fail).
+- The `triple_prop_*` lemmas are used by the proofs of the hax tests
+  (`hax-trait-specs`).
 
 ## Rebase notes
 
@@ -61,3 +69,5 @@ Makes `Std.Do`'s `mvcgen` usable on Aeneas programs (fork PRs #18, #31):
   monad (#1180), its generic WPs (#1344) and the module system (#1230).
 - 2026-10-20: lemmas generalised to `Type u` (upstream #1412); ported to Lean
   v4.35.0 (`wp_admissible_of_div`, deprecated `mvcgen` syntax in tests).
+- 2026-10-25: `triple_prop_*` lemmas, moved from the hax tests
+  (`hax-trait-specs`).
