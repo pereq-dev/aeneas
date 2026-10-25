@@ -18,8 +18,9 @@ There are several kinds of rust-written specs:
 * *Trait level specs*: every local trait gets a *companion* structure
   `<Trait>.Lawful` that registers the specifications attached to its methods.
   Every local implementation, including derived impls and the impls of foreign
-  traits (e.g. `Clone`, or the `Fn*` impls of closures), generates a
-  corresponding obligation of lawfulness.
+  traits (e.g. `Clone`, or the `Fn*` impls of closures, except those of the
+  closures in the contracts), generates a corresponding obligation of
+  lawfulness.
     * If no annotation is written, the companion structure has no method field
       (the parent fields remain).
     * `#[requires(..)]` / `#[ensures(\|res\|..)]` on the methods of trait

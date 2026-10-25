@@ -71,6 +71,11 @@ def specs.contracts.__21.ensures.closure := Std.U32
 @[reducible]
 def specs.contracts.Opaque := Unit
 
+/-- [hax_tests::specs::contracts::with_closure::{closure}]
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+@[reducible]
+def specs.contracts.with_closure.closure := Unit
+
 /-- Trait declaration: [hax_tests::specs::generics::Val]
     Source: 'src/specs/generics.rs', lines 16:0-18:1 -/
 structure specs.generics.Val (Self : Type _) where

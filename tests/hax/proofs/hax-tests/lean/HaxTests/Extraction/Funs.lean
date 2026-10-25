@@ -344,6 +344,89 @@ def specs.contracts.with_loop_loop
 def specs.contracts.with_loop (n : Std.U32) : RustM Std.U32 := do
   specs.contracts.with_loop_loop { start := 0#u32, «end» := n } 0#u32
 
+/-- [hax_tests::specs::contracts::apply]:
+    Source: 'src/specs/contracts.rs', lines 167:0-169:1 -/
+def specs.contracts.apply
+  {F : Type _} (coreopsfunctionFnFTupleU32U32Inst : core.ops.function.Fn F
+  Std.U32 Std.U32) (f : F) (x : Std.U32) :
+  RustM Std.U32
+  := do
+  coreopsfunctionFnFTupleU32U32Inst.call f x
+
+/-- [hax_tests::specs::contracts::with_closure::{impl core::ops::function::Fn<(u32,), u32> for hax_tests::specs::contracts::with_closure::{closure}}::call]:
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+def
+  specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32.call
+  (c : specs.contracts.with_closure.closure) (tupled_args : Std.U32) :
+  RustM Std.U32
+  := do
+  ok tupled_args
+
+/-- [hax_tests::specs::contracts::with_closure::{impl core::ops::function::FnMut<(u32,), u32> for hax_tests::specs::contracts::with_closure::{closure}}::call_mut]:
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+def
+  specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32.call_mut
+  (state : specs.contracts.with_closure.closure) (args : Std.U32) :
+  RustM (Std.U32 × specs.contracts.with_closure.closure)
+  := do
+  let i ←
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32.call
+      state args
+  ok (i, state)
+
+/-- [hax_tests::specs::contracts::with_closure::{impl core::ops::function::FnOnce<(u32,), u32> for hax_tests::specs::contracts::with_closure::{closure}}::call_once]:
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+def
+  specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnOnceTupleU32U32.call_once
+  (c : specs.contracts.with_closure.closure) (i : Std.U32) :
+  RustM Std.U32
+  := do
+  let (i1, _) ←
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32.call_mut
+      c i
+  ok i1
+
+/-- Trait implementation: [hax_tests::specs::contracts::with_closure::{impl core::ops::function::FnOnce<(u32,), u32> for hax_tests::specs::contracts::with_closure::{closure}}]
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+@[reducible]
+def specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnOnceTupleU32U32
+  : core.ops.function.FnOnce specs.contracts.with_closure.closure Std.U32
+  Std.U32 := {
+  call_once :=
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnOnceTupleU32U32.call_once
+}
+
+/-- Trait implementation: [hax_tests::specs::contracts::with_closure::{impl core::ops::function::FnMut<(u32,), u32> for hax_tests::specs::contracts::with_closure::{closure}}]
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+@[reducible]
+def specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32
+  : core.ops.function.FnMut specs.contracts.with_closure.closure Std.U32
+  Std.U32 := {
+  FnOnceInst :=
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnOnceTupleU32U32
+  call_mut :=
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32.call_mut
+}
+
+/-- Trait implementation: [hax_tests::specs::contracts::with_closure::{impl core::ops::function::Fn<(u32,), u32> for hax_tests::specs::contracts::with_closure::{closure}}]
+    Source: 'src/specs/contracts.rs', lines 172:10-172:20 -/
+@[reducible]
+def specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32 :
+  core.ops.function.Fn specs.contracts.with_closure.closure Std.U32 Std.U32
+  := {
+  FnMutInst :=
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32
+  call :=
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32.call
+}
+
+/-- [hax_tests::specs::contracts::with_closure]:
+    Source: 'src/specs/contracts.rs', lines 171:0-173:1 -/
+def specs.contracts.with_closure (x : Std.U32) : RustM Std.U32 := do
+  specs.contracts.apply
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32 ()
+    x
+
 /-- [hax_tests::specs::generics::generic]:
     Source: 'src/specs/generics.rs', lines 11:0-13:1 -/
 def specs.generics.generic (N : Std.U32) (x : Std.U32) : RustM Std.U32 := do

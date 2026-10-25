@@ -56,50 +56,24 @@ theorem Tuple.Insts.Hax_testsSpecsArgumentsSize.Lawful :
   := ⟨⟩
 
 theorem
-  specs.contracts.__20.requires.closure.Insts.CoreOpsFunctionFnOnceTupleU32Prop.Lawful
-  :
-  core.ops.function.FnOnce.Lawful specs.contracts.__20.requires.closure Std.U32
-  hax_lib.prop.Prop
-  specs.contracts.__20.requires.closure.Insts.CoreOpsFunctionFnOnceTupleU32Prop
+  specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnOnceTupleU32U32.Lawful :
+  core.ops.function.FnOnce.Lawful specs.contracts.with_closure.closure Std.U32
+    Std.U32
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnOnceTupleU32U32
   := ⟨⟩
 
 theorem
-  specs.contracts.__20.requires.closure.Insts.CoreOpsFunctionFnMutTupleU32Prop.Lawful
-  :
-  core.ops.function.FnMut.Lawful specs.contracts.__20.requires.closure Std.U32
-  hax_lib.prop.Prop
-  specs.contracts.__20.requires.closure.Insts.CoreOpsFunctionFnMutTupleU32Prop
+  specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32.Lawful :
+  core.ops.function.FnMut.Lawful specs.contracts.with_closure.closure Std.U32
+    Std.U32
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnMutTupleU32U32
   := ⟨⟩
 
 theorem
-  specs.contracts.__20.requires.closure.Insts.CoreOpsFunctionFnTupleU32Prop.Lawful
-  :
-  core.ops.function.Fn.Lawful specs.contracts.__20.requires.closure Std.U32
-  hax_lib.prop.Prop
-  specs.contracts.__20.requires.closure.Insts.CoreOpsFunctionFnTupleU32Prop
-  := ⟨⟩
-
-theorem
-  specs.contracts.__21.ensures.closure.Insts.CoreOpsFunctionFnOnceTupleU32Bool.Lawful
-  :
-  core.ops.function.FnOnce.Lawful specs.contracts.__21.ensures.closure Std.U32
-  Bool
-  specs.contracts.__21.ensures.closure.Insts.CoreOpsFunctionFnOnceTupleU32Bool
-  := ⟨⟩
-
-theorem
-  specs.contracts.__21.ensures.closure.Insts.CoreOpsFunctionFnMutTupleU32Bool.Lawful
-  :
-  core.ops.function.FnMut.Lawful specs.contracts.__21.ensures.closure Std.U32
-  Bool
-  specs.contracts.__21.ensures.closure.Insts.CoreOpsFunctionFnMutTupleU32Bool
-  := ⟨⟩
-
-theorem
-  specs.contracts.__21.ensures.closure.Insts.CoreOpsFunctionFnTupleU32Bool.Lawful
-  :
-  core.ops.function.Fn.Lawful specs.contracts.__21.ensures.closure Std.U32 Bool
-  specs.contracts.__21.ensures.closure.Insts.CoreOpsFunctionFnTupleU32Bool
+  specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32.Lawful :
+  core.ops.function.Fn.Lawful specs.contracts.with_closure.closure Std.U32
+    Std.U32
+    specs.contracts.with_closure.closure.Insts.CoreOpsFunctionFnTupleU32U32
   := ⟨⟩
 
 theorem U32.Insts.Hax_testsSpecsGenericsVal.Lawful :
