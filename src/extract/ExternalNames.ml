@@ -572,13 +572,18 @@ let external_types_keep_params_map =
     [core::fmt::Formatter<'a>] stores a [&'a mut dyn Write], so ['a] is mutable,
     which Aeneas fails on (https://github.com/AeneasVerif/aeneas/issues/1473).
     [core_models] models [Formatter] without a region, so we declare ['a] as not
-    mutable. This can be removed once that issue is fixed *and* [core_models]
-    gives [Formatter] its region, with the signatures of Rust core. *)
+    mutable. The same holds for the [core::fmt::builders] types, which store a
+    [&'a mut Formatter<'b>]. This can be removed once that issue is fixed *and*
+    [core_models] gives these types their regions, with the signatures of Rust
+    core. *)
 let mk_core_models_mut_regions_overrides () =
   NameMatcherMap.of_list
     (List.map
        (fun (info : Pure.external_type_info) -> (info.rust_name, info))
-       [ mk_type "core::fmt::Formatter" "core.fmt.Formatter" ~mut_regions:[] ])
+       [
+         mk_type "core::fmt::Formatter" "core.fmt.Formatter" ~mut_regions:[];
+         mk_type "core::fmt::builders::_" "core.fmt.builders" ~mut_regions:[];
+       ])
 
 let core_models_mut_regions_overrides =
   mk_memoized mk_core_models_mut_regions_overrides

@@ -27,7 +27,9 @@ items of `core`, `alloc` and `std` are taken from the external
   come from Charon's analysis of the real definitions; `Formatter` stores a
   `&'a mut dyn Write`, so every `Debug`/`Display` impl taking a
   `&mut Formatter<'_>` would fail with an `Unreachable` in
-  `SymbolicToPureValues` (AeneasVerif/aeneas#1473, cryspen/hax#2141).
+  `SymbolicToPureValues` (AeneasVerif/aeneas#1473, cryspen/hax#2141). The
+  same holds for the `core::fmt::builders` types, which store a
+  `&'a mut Formatter<'b>`, and are overridden too.
   `TypesAnalysis` looks the override up under the flag when a type has no
   entry in the external type map.
 
@@ -96,4 +98,5 @@ items of `core`, `alloc` and `std` are taken from the external
   check (#1404); test for promoted constants added.
 - 2026-11-02: test for constants (local and builtin) under the flag, against
   the charon consts rework (upstream #1471, #1496).
-- 2026-11-26: `mut_regions` override for `Formatter` (fork PR #90).
+- 2026-11-26: `mut_regions` override for `Formatter` and the `fmt` builders
+  (fork PR #90).
