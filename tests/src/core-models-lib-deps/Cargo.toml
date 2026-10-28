@@ -1,0 +1,14 @@
+[package]
+name = "core_models_lib_deps"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "core_models_lib_deps"
+path = "src/lib.rs"
+
+[dependencies]
+dep = { path = "dep" }
+
+[workspace]
+members = ["dep"]

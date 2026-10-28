@@ -23,22 +23,31 @@ let generic_args_to_string (ctx : extraction_ctx) =
 let texpr_to_string (ctx : extraction_ctx) =
   PrintPure.texpr_to_string (extraction_ctx_to_fmt_env ctx) false "" "  "
 
-(** The crates that the core models library provides. *)
+(** The standard library crates that the core models library provides. *)
 let core_models_crates = [ "core"; "alloc"; "std" ]
+
+(** All the crates that the core models library provides. *)
+let core_models_lib_crates =
+  core_models_crates @ [ "hax_lib"; "rust_primitives" ]
+
+(** Whether an item is non-local and comes from one of [crates]. *)
+let is_item_of_crates (crates : string list) (item_meta : Types.item_meta) :
+    bool =
+  (not item_meta.is_local)
+  &&
+  match item_meta.name with
+  | Types.PeIdent (crate, _) :: _ -> List.mem crate crates
+  | _ -> false
 
 (** Whether the allocator filter should be registered for an item.
 
     Under [-core-models-lib], this filter is supposed to remove type parameters
     and trait clauses left dangling by Charon's [hide_allocator] pass. The
     filter can cause signature mismatches between function declarations and
-    function calls, so we activate it only for the crates that the core models
-    library provides. *)
+    function calls, so we activate it only for the standard library crates that
+    the core models library provides. *)
 let should_register_allocator_filter (item_meta : Types.item_meta) : bool =
-  !Config.core_models_lib && (not item_meta.is_local)
-  &&
-  match item_meta.name with
-  | Types.PeIdent (crate, _) :: _ -> List.mem crate core_models_crates
-  | _ -> false
+  !Config.core_models_lib && is_item_of_crates core_models_crates item_meta
 
 (** Under [-core-models-lib], detect type parameters and trait clauses left
     dangling by Charon's [hide_allocator] pass (which strips the [A] parameter
