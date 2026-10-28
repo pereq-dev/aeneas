@@ -13,8 +13,10 @@ items of `core`, `alloc` and `std` are taken from the external
   (`unless_core_models_lib`), except the ones that only fix a shape: the
   `Box::new` entry (it must stay the identity, `T -> T`, or the
   "not a result type" sanity check fires) and the allocator `keep_params` map;
-- non-local items are skipped (`skip_for_core_models_lib`) and non-local trait
-  impl names get a crate prefix;
+- the items of the crates `CoreModels` provides (`core`, `alloc`, `std`,
+  `hax_lib`, `rust_primitives`) are skipped (`skip_for_core_models_lib`); the
+  items of other dependency crates are extracted as without the flag; non-local
+  trait impl names get a crate prefix;
 - the `filter_eq_assert_fields_method` prepass removes `assert_fields_are_eq`
   from derived `Eq` impls;
 - `compute_allocator_filter` drops the type parameters and trait clauses that
@@ -25,8 +27,8 @@ items of `core`, `alloc` and `std` are taken from the external
 ## Invariants
 
 - Without the flag, the output is byte-identical to upstream's.
-- With the flag, no item from a non-local crate is emitted, and the flag is
-  rejected for non-Lean backends.
+- With the flag, no item from a crate `CoreModels` provides is emitted, and the
+  flag is rejected for non-Lean backends.
 - All Lean overrides from `ExtractBuiltinLean.ml` are disabled except the
   shape-only ones (`Box::new`, the allocator `keep_params` map). The
   backend-independent globals of `builtin_globals` (the integer `MIN`, `MAX`
@@ -45,6 +47,9 @@ items of `core`, `alloc` and `std` are taken from the external
   constant, which must be inlined rather than extracted as a global (the
   global filter combines this patch's check with upstream's promoted-constant
   check).
+- `tests/src/core-models-lib-deps` (expected output in
+  `tests/lean/CoreModelsLib/Deps`): the items of a non-`core` dependency crate
+  (a function, a type, a trait and its impl) are still declared.
 
 ## Rebase notes
 
@@ -71,3 +76,5 @@ items of `core`, `alloc` and `std` are taken from the external
   (#1230); the clause-filter length fix moved to `fix-trait-clause-filter-length`.
 - 2026-10-20: the global filter is merged with upstream's promoted-constant
   check (#1404); test for promoted constants added.
+- 2026-10-28: only the items of the crates `CoreModels` provides are skipped,
+  so the items of other dependency crates are no longer dropped.
