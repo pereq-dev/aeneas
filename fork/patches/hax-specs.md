@@ -41,13 +41,35 @@ are consumed by the producer.
 
 ## Tests
 
-- `tests/src/hax_specs` (expected outputs `tests/lean/HaxSpecs`): basic specs,
-  const and trait generics, `future`, implicit generics, mutually recursive
-  functions, unit arguments (#79), supertraits (direct, transitive and
-  generic, #80), items whose names look like generated ones without
-  clashing (#82). The test crate uses `hax-lib` 0.4.1.
-- The `hax-lib` crates are vendored for the nix check (`haxSpecsVendor` in
-  `flake.nix`).
+- `tests/hax` (fork PR #83) is a crate on `hax-lib` 0.4.2, extracted the way
+  hax users do it: `cargo hax extract` runs the proof scenario `hax-tests` of
+  `tests/hax/hax.toml`, which points hax at `bin/aeneas` and
+  `charon/bin/charon`. The extracted code (`tests/hax/proofs/hax-tests/lean`,
+  Lean package `HaxTests`, under `Extraction/`) is committed, next to
+  handwritten assumptions (`Assumptions/`) and proofs of the obligations
+  (`Verification/`).
+- The modules of `tests/hax/src/specs/`: the shape of contracts, arguments
+  (unit arguments, #79), `&mut` inputs and `future`, generics, mutually
+  recursive functions, trait methods (supertraits, direct, transitive and
+  generic, #80) and names that look like generated ones without clashing
+  (#82).
+- Not run by `make test`: `make test-hax HAX_DIR=<hax checkout>`
+  (`scripts/test-hax.sh`; `extract-hax` and `verify-hax` run the two steps)
+  needs `cargo hax` and a checkout of hax. `make clean-generated-aeneas`
+  leaves `tests/hax` alone.
+- `make verify-hax` builds the extracted code against the Lean libraries
+  (`Hax`, `CoreModels`) of the hax checkout, which must build against this
+  aeneas: Lean modules, on aeneas's Lean toolchain. As of 2026-10-23, hax
+  `main` does not (Lean v4.31, no modules, aeneas pinned at the pre-2026-10-20
+  fork), so only `make extract-hax` can run against it.
+
+## Rebase notes
+
+- `tests/hax` replaced `tests/src/hax_specs` (and the vendored `hax-lib` of
+  the nix check, `haxSpecsVendor`). Tests that upstream-port commits add to
+  `tests/src/hax_specs` belong in a module of `tests/hax/src/specs/` (e.g.
+  `mutual.rs`, from the 2026-10-20 rebase), and the outputs must be
+  re-extracted with `make extract-hax`.
 
 ## History
 
@@ -64,3 +86,6 @@ are consumed by the producer.
   (fork PR #80).
 - 2026-10-23: the names generated for specs are registered, and clashes are
   errors (fork PR #82).
+- 2026-10-23: the tests moved to `tests/hax`, extracted end-to-end with
+  `cargo hax` (fork PR #83); the mutually recursive functions became
+  `specs/mutual.rs`.
