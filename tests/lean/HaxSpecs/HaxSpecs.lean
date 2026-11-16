@@ -208,6 +208,7 @@ end
 def basic.only_requires.pre (x : Std.U32) : RustM Bool := do
   ok (x < 100#u32)
 
+@[reducible]
 def basic.only_requires.spec (x : Std.U32) : Prop :=
   (basic.only_requires.pre x).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -221,6 +222,7 @@ def basic.only_requires.spec (x : Std.U32) : Prop :=
 def basic.only_ensures.post (x : Std.U32) (result : Std.U32) : RustM Bool := do
   ok (result = x)
 
+@[reducible]
 def basic.only_ensures.spec (x : Std.U32) : Prop :=
   ⦃ ⌜ True ⌝ ⦄
   basic.only_ensures x
@@ -239,6 +241,7 @@ def basic.both.pre (x : Std.U32) : RustM Bool := do
 def basic.both.post (x : Std.U32) (result : Std.U32) : RustM Bool := do
   ok (result > x)
 
+@[reducible]
 def basic.both.spec (x : Std.U32) : Prop :=
   (basic.both.pre x).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -258,6 +261,7 @@ def basic.returns_unit.pre (x : Std.U32) : RustM Bool := do
 def basic.returns_unit.post (x : Std.U32) (_ : Unit) : RustM Bool := do
   ok true
 
+@[reducible]
 def basic.returns_unit.spec (x : Std.U32) : Prop :=
   (basic.returns_unit.pre x).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -271,6 +275,7 @@ def basic.returns_unit.spec (x : Std.U32) : Prop :=
 def basic.block_in_requires.pre (x : Std.U32) : RustM Bool := do
   ok (x > 10#u32)
 
+@[reducible]
 def basic.block_in_requires.spec (x : Std.U32) : Prop :=
   (basic.block_in_requires.pre x).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -288,6 +293,7 @@ def basic.returns_pair.post
   then ok (b = x)
   else ok false
 
+@[reducible]
 def basic.returns_pair.spec (x : Std.U32) : Prop :=
   ⦃ ⌜ True ⌝ ⦄
   basic.returns_pair x
@@ -309,6 +315,7 @@ def extra_args.generic.post
   (N : Std.U32) (x : Std.U32) (result : Std.U32) : RustM Bool := do
   ok (result < N)
 
+@[reducible]
 def extra_args.generic.spec (N : Std.U32) (x : Std.U32) : Prop :=
   (extra_args.generic.pre N x).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -338,6 +345,7 @@ def extra_args.traits.post
   := do
   ok (result < 2000#u32)
 
+@[reducible]
 def extra_args.traits.spec {T : Type _} (ValInst : extra_args.Val T) 
   (t : T) (x : Std.U32) : Prop :=
   (extra_args.traits.pre ValInst t x).holds →
@@ -359,6 +367,7 @@ def future.incr.post (x : Std.U32) (x_future : Std.U32) : RustM Bool := do
   let i ← x + 1#u32
   ok (x_future = i)
 
+@[reducible]
 def future.incr.spec (x : Std.U32) : Prop :=
   (future.incr.pre x).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -385,6 +394,7 @@ def future.incr_i.post
   let i3 ← i2 + 1#u32
   ok (i1 = i3)
 
+@[reducible]
 def future.incr_i.spec (x : Slice Std.U32) (i : Std.Usize) : Prop :=
   (future.incr_i.pre x i).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -417,6 +427,7 @@ def future.swap_and_add.post
     else ok false
   else ok false
 
+@[reducible]
 def future.swap_and_add.spec (x : Std.U32) (y : Std.U32) : Prop :=
   (future.swap_and_add.pre x y).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -431,6 +442,7 @@ def implicit_generics.nothing.post
   {T : Type _} (k : Std.Usize) (o : Option T) : RustM Bool := do
   ok true
 
+@[reducible]
 def implicit_generics.nothing.spec (T : Type _) (k : Std.Usize) : Prop :=
   ⦃ ⌜ True ⌝ ⦄
   implicit_generics.nothing T k
@@ -446,6 +458,7 @@ def implicit_generics.of_fst.post
   := do
   ok true
 
+@[reducible]
 def implicit_generics.of_fst.spec {T : Type _} (N : Std.Usize) (t : T)
   : Prop :=
   ⦃ ⌜ True ⌝ ⦄
@@ -463,6 +476,7 @@ def implicit_generics.empty.post
   := do
   ok true
 
+@[reducible]
 def implicit_generics.empty.spec (T : Type _) (N : Std.Usize) (k : Std.Usize)
   : Prop :=
   ⦃ ⌜ True ⌝ ⦄
@@ -490,6 +504,7 @@ def implicit_generics.from_default.post
   := do
   ok true
 
+@[reducible]
 def
   implicit_generics.from_default.spec {T : Type _} (N : Std.Usize)
                                      (coredefaultDefaultInst :
@@ -516,6 +531,7 @@ def mutual.is_even.post (n : Std.U32) (result : Bool) : RustM Bool := do
   let i ← n % 2#u32
   ok (result = (i = 0#u32))
 
+@[reducible]
 def mutual.is_even.spec (n : Std.U32) : Prop :=
   (mutual.is_even.pre n).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -536,6 +552,7 @@ def mutual.is_odd.post (n : Std.U32) (result : Bool) : RustM Bool := do
   let i ← n % 2#u32
   ok (result = (i = 1#u32))
 
+@[reducible]
 def mutual.is_odd.spec (n : Std.U32) : Prop :=
   (mutual.is_odd.pre n).holds →
   ⦃ ⌜ True ⌝ ⦄
@@ -559,6 +576,7 @@ def const_generic_ty.MyStruct.build.post
   := do
   ok true
 
+@[reducible]
 def const_generic_ty.MyStruct.build.spec (N : Std.Usize) (k : Std.Usize)
   : Prop :=
   (const_generic_ty.MyStruct.build.pre N k).holds →
@@ -576,6 +594,7 @@ def const_generic_ty.MyStruct.get.post
   := do
   ok true
 
+@[reducible]
 def const_generic_ty.MyStruct.get.spec {N : Std.Usize}
   (self : const_generic_ty.MyStruct N) : Prop :=
   ⦃ ⌜ True ⌝ ⦄
