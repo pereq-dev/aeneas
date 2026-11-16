@@ -246,9 +246,15 @@ let emit_spec ctx fmt (s : HaxSpecs.spec) opt_span =
 
           emit_conditions ctx fmt ~pre ~post;
 
-          (* Spec definition header: [def <fn>.spec <binders> : Prop :=] *)
+          (* Spec definition header:
+             [@[reducible] def <fn>.spec <binders> : Prop :=].
+             The obligation [<fn>.spec.proof] states [<fn>.spec args]; the
+             [spec] attribute only accepts it if it can see the Hoare triple
+             through the definition, which requires [reducible]. *)
           F.pp_print_break fmt 0 0;
           F.pp_open_vbox fmt 0;
+          F.pp_print_string fmt "@[reducible]";
+          F.pp_print_cut fmt ();
           F.pp_open_vbox fmt ctx.indent_incr;
           F.pp_open_hovbox fmt ctx.indent_incr;
           (match fun_decl_kind_to_qualif SingleNonRec with
