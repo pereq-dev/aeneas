@@ -21,5 +21,13 @@ and obligation = FunctionContract of { spec : function_spec; proof : proof }
 (** Type for proof objects *)
 and proof = Admitted [@@deriving show]
 
+(** The function a spec is about *)
+let spec_fun (FunctionSpec { fn; _ } : spec) : Pure.FunDeclId.id = fn
+
+(** The function a proof obligation is about *)
+let obligation_fun (FunctionContract { spec = { fn; _ }; _ } : obligation) :
+    Pure.FunDeclId.id =
+  fn
+
 (** The extra Lean modules hax specs need to elaborate *)
 let required_imports () : string list = [ "Hax" ]

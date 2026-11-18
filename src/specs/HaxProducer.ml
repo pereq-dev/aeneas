@@ -180,7 +180,7 @@ let produce (_ctx : TranslateCore.trans_ctx)
       crate.fun_decls
   in
 
-  [%linfo
+  [%ldebug
     Printf.sprintf "hax-specs: produced %d FunctionSpec entries"
       (List.length new_specs)];
 
