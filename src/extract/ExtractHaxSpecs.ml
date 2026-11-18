@@ -59,13 +59,27 @@ module Helpers = struct
 
   (** The generics to pass to a pre/post condition [cond], from the [generics]
       of the function it describes. The types and const generics match, but the
-      trait clauses may not: for [trait B: A], the conditions of a method of [B]
-      have clauses [Self_: A] and [Self_: B], while the method only has
-      [Self: B]. We look up each clause of [cond] among the trait refs of
-      [generics] and their parent clauses. *)
+      trait clauses may not:
+      - their order differs: [cond] has the clauses of a trait method's own
+        generics first, the method has them last;
+      - for [trait T<U> where U: Clone], [cond] has a clause [U: Clone], which
+        the method reaches through its [Self: T<U>] clause.
+
+      - for [trait B: A], [cond] has clauses [Self_: A] and [Self_: B]: hax-lib
+        adds the (transitive) supertraits as bounds of the conditions, which the
+        method reaches through its [Self: B] clause.
+
+      We look up each clause of [cond] among the trait refs of [generics] and
+      their transitive parent clauses, after expressing its generics in terms of
+      [generics].
+
+      Not supported yet: a supertrait with associated types. Charon turns them
+      into type parameters of [cond] that the method does not have. *)
   let cond_generics span (ctx : ExtractBase.extraction_ctx)
       (generics : Pure.generic_args) (cond : Pure.fun_decl) : Pure.generic_args
       =
+    let params = cond.signature.generics in
+    (* [tr] and its transitive parent clauses *)
     let rec with_parents (tr : Pure.trait_ref) : Pure.trait_ref list =
       let decl_ref = tr.trait_decl_ref in
       match
@@ -93,9 +107,30 @@ module Helpers = struct
           :: List.concat_map (fun c -> with_parents (parent c)) d.parent_clauses
     in
     let available = List.concat_map with_parents generics.trait_refs in
+    [%cassert] span
+      (List.length params.types = List.length generics.types
+      && List.length params.const_generics = List.length generics.const_generics
+      )
+      "A pre/post condition does not have the same type and const generic \
+       parameters as its function (e.g. a supertrait of the method's trait has \
+       associated types)";
+    let subst : PureUtils.subst =
+      {
+        ty_subst = PureUtils.make_type_subst params.types generics.types;
+        cg_subst =
+          PureUtils.make_const_generic_subst params.const_generics
+            generics.const_generics;
+        (* The generics of a clause mention no other clause *)
+        tr_subst = (fun _ -> UnknownTrait "clause of a pre/post condition");
+        tr_self = UnknownTrait "Self";
+      }
+    in
     let find (c : Pure.trait_param) : Pure.trait_ref =
       let decl_ref : Pure.trait_decl_ref =
-        { trait_decl_id = c.trait_id; decl_generics = c.generics }
+        {
+          trait_decl_id = c.trait_id;
+          decl_generics = PureUtils.generic_args_substitute subst c.generics;
+        }
       in
       match
         List.find_opt
@@ -108,10 +143,7 @@ module Helpers = struct
             "Could not find an instance for a trait clause of a pre/post \
              condition"
     in
-    {
-      generics with
-      trait_refs = List.map find cond.signature.generics.trait_clauses;
-    }
+    { generics with trait_refs = List.map find params.trait_clauses }
 
   (** Emit [(<cond> <generics> <args>).holds] for a fn [f]. *)
   let emit_holds span ctx fmt generics args (f : Pure.fun_decl) =

@@ -23,10 +23,14 @@ are consumed by the producer.
 - Arguments of spec functions are printed with `Extract.extract_App` (#58).
 - Specs and obligations pass every input of the function, in order: unit
   inputs, which are extracted as `_` binders, are passed as `()` (#79).
-- The conditions of a trait method take one trait clause per (transitive)
-  supertrait, while the method reaches them through its `Self` clause: each
-  clause of a condition is instantiated with the matching trait ref of the
-  method or one of its parent clauses (`cond_generics`, #80).
+- The trait clauses of the conditions of a trait method differ from the
+  method's: the clauses of the method's own generics come first, and the
+  where-clauses of the trait are separate clauses. Each clause of a condition
+  is instantiated with the matching trait ref of the method or one of its
+  transitive parent clauses (`cond_generics`, #80): hax-lib (up to 0.5.0) adds
+  the supertraits of the trait as bounds of the conditions. Not supported: a
+  supertrait with associated types, which Charon turns into type parameters of
+  the conditions that the method does not have (an error).
 - Obligations are plain theorems, not `@[spec]` lemmas: users register the
   specs they prove.
 - Spec and obligation files are emitted only when non-empty; their imports come
@@ -38,10 +42,13 @@ are consumed by the producer.
 
 - `tests/src/hax_specs` (expected outputs `tests/lean/HaxSpecs`): basic specs,
   const and trait generics, `future`, implicit generics, mutually recursive
-  functions, unit arguments (#79), supertraits (direct, transitive and
-  generic, #80). The test crate uses `hax-lib` 0.4.2.
+  functions, unit arguments (#79), trait clauses of conditions and
+  supertraits (direct, transitive and generic, #80). The test crate uses
+  `hax-lib` 0.4.2.
+- `tests/src/hax_specs_supertrait_assoc` (known failure): a supertrait with an
+  associated type.
 - The `hax-lib` crates are vendored for the nix check (`haxSpecsVendor` in
-  `flake.nix`).
+  `flake.nix`, shared by the `hax_specs*` crates).
 
 ## History
 
@@ -54,5 +61,5 @@ are consumed by the producer.
   `tests/src/hax_specs_step` and the `@[spec]` attribute on obligations) removed
   (fork PR #76).
 - 2026-10-23: unit arguments are kept in specs and obligations (fork PR #79).
-- 2026-10-23: supertrait clauses are passed to the conditions of trait methods
-  (fork PR #80).
+- 2026-10-23: the trait clauses of the conditions of trait methods are matched
+  with the method's, supertrait clauses through parent clauses (fork PR #80).

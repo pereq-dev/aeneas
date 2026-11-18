@@ -292,6 +292,44 @@ def supertraits.H.provided_h.default
   := do
   HInst.GInst.g self
 
+/-- Trait declaration: [hax_specs::trait_clauses::H]
+    Source: 'src/lib.rs', lines 276:4-284:5
+    Visibility: public -/
+structure trait_clauses.H (Self : Type _) (T : Type _) where
+  h : Self → RustM T
+  provided_h : forall {U : Type} (corecloneCloneInst : core.clone.Clone U),
+    Self → U → RustM T
+
+/-- [hax_specs::trait_clauses::H::provided_h]:
+    Source: 'src/lib.rs', lines 280:8-283:9
+    Visibility: public -/
+@[trait_default]
+def trait_clauses.H.provided_h.default
+  {Self : Type _} {T : Type _} {U : Type _} (HInst : trait_clauses.H Self T)
+  (corecloneCloneInst : core.clone.Clone U) (self : Self) (u : U) :
+  RustM T
+  := do
+  let _ ← corecloneCloneInst.clone u
+  HInst.h self
+
+/-- Trait declaration: [hax_specs::trait_clauses::W]
+    Source: 'src/lib.rs', lines 289:4-297:5
+    Visibility: public -/
+structure trait_clauses.W (Self : Type _) (U : Type _) where
+  corecloneCloneInst : core.clone.Clone U
+  provided_w : Self → U → RustM U
+
+/-- [hax_specs::trait_clauses::W::provided_w]:
+    Source: 'src/lib.rs', lines 294:8-296:9
+    Visibility: public -/
+@[trait_default]
+def trait_clauses.W.provided_w.default
+  {Self : Type _} {U : Type _} (WInst : trait_clauses.W Self U) (self : Self)
+  (u : U) :
+  RustM U
+  := do
+  WInst.corecloneCloneInst.clone u
+
 
 /-- [hax_specs::basic::only_requires::pre]:
     Source: 'src/lib.rs', lines 5:4-5:24 -/
@@ -790,6 +828,53 @@ def
   ⦃ ⇓ res =>
   ⌜ (supertraits.H.provided_h.post HInst.GInst HInst self res).holds ⌝ ⦄
 
+
+/-- [hax_specs::trait_clauses::H::provided_h::post]:
+    Source: 'src/lib.rs', lines 275:4-275:26 -/
+@[reducible]
+def trait_clauses.H.provided_h.post
+  {Self_ : Type _} {T : Type _} {U : Type _} (corecloneCloneInst :
+  core.clone.Clone U) (HInst : trait_clauses.H Self_ T) (self_ : Self_) 
+  (u : U) (t : T) :
+  RustM Bool
+  := do
+  ok true
+
+def
+  trait_clauses.H.provided_h.default.spec {Self : Type _} {T : Type _} {U :
+                                         Type _} (HInst : trait_clauses.H Self
+                                         T) (corecloneCloneInst :
+                                         core.clone.Clone U) (self : Self)
+  (u : U) : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  trait_clauses.H.provided_h.default HInst corecloneCloneInst self u
+  ⦃ ⇓ res =>
+  ⌜
+  (trait_clauses.H.provided_h.post corecloneCloneInst HInst self u res).holds
+  ⌝ ⦄
+
+
+/-- [hax_specs::trait_clauses::W::provided_w::post]:
+    Source: 'src/lib.rs', lines 288:4-288:26 -/
+@[reducible]
+def trait_clauses.W.provided_w.post
+  {Self_ : Type _} {U : Type _} (corecloneCloneInst : core.clone.Clone U)
+  (WInst : trait_clauses.W Self_ U) (self_ : Self_) (u : U) (t : U) :
+  RustM Bool
+  := do
+  ok true
+
+def
+  trait_clauses.W.provided_w.default.spec {Self : Type _} {U : Type _} (WInst :
+                                         trait_clauses.W Self U) (self : Self)
+  (u : U) : Prop :=
+  ⦃ ⌜ True ⌝ ⦄
+  trait_clauses.W.provided_w.default WInst self u
+  ⦃ ⇓ res =>
+  ⌜
+  (trait_clauses.W.provided_w.post WInst.corecloneCloneInst WInst self u
+  res).holds ⌝ ⦄
+
 theorem basic.only_requires.spec.proof (x : Std.U32) :
   basic.only_requires.spec x
   := by sorry
@@ -889,6 +974,22 @@ theorem
   supertraits.H.provided_h.default.spec.proof {Self : Type _} {T : Type _}
                                              (HInst : supertraits.H Self T)
   (self : Self) : supertraits.H.provided_h.default.spec HInst self
+  := by sorry
+
+theorem
+  trait_clauses.H.provided_h.default.spec.proof {Self : Type _} {T : Type _} {U
+                                               : Type _} (HInst :
+                                               trait_clauses.H Self T)
+                                               (corecloneCloneInst :
+                                               core.clone.Clone U)
+  (self : Self) (u : U) :
+  trait_clauses.H.provided_h.default.spec HInst corecloneCloneInst self u
+  := by sorry
+
+theorem
+  trait_clauses.W.provided_w.default.spec.proof {Self : Type _} {U : Type _}
+                                               (WInst : trait_clauses.W Self U)
+  (self : Self) (u : U) : trait_clauses.W.provided_w.default.spec WInst self u
   := by sorry
 
 end hax_specs

@@ -263,3 +263,39 @@ mod supertraits {
         }
     }
 }
+
+// The trait clauses of the conditions of a trait method differ from the
+// method's.
+#[allow(dead_code)]
+mod trait_clauses {
+    use hax_lib::*;
+
+    // The clauses of the method's own generics come first in the conditions,
+    // last in the method.
+    #[hax_lib::attributes]
+    pub trait H<T> {
+        fn h(&self) -> T;
+
+        #[ensures(|_| true)]
+        fn provided_h<U: Clone>(&self, u: U) -> T {
+            let _ = u.clone();
+            self.h()
+        }
+    }
+
+    // The conditions have a clause `U: Clone`, which the method reaches
+    // through its `Self: W<U>` clause.
+    #[hax_lib::attributes]
+    pub trait W<U>
+    where
+        U: Clone,
+    {
+        #[ensures(|_| true)]
+        fn provided_w(&self, u: &U) -> U {
+            u.clone()
+        }
+    }
+
+    // Not supported yet: a supertrait with associated types (known failure
+    // `hax_specs_supertrait_assoc`).
+}

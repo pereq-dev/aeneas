@@ -217,7 +217,8 @@
           ]);
         };
         
-        # Vendor all cargo dependencies for the hax_specs test crate
+        # Vendor all cargo dependencies for the hax_specs test crates (hax_specs,
+        # hax_specs_supertrait_assoc)
         haxSpecsVendor =
           (import inputs.charon.inputs.nixpkgs {
             inherit system;
@@ -248,9 +249,12 @@
             export RUSTC_CMD=rustc
             export CARGO_CMD=cargo
 
-            # Configure cargo to use pre-vendored dependencies
-            mkdir -p tests/src/hax_specs/.cargo
-            cat > tests/src/hax_specs/.cargo/config.toml <<CARGOEOF
+            # Configure cargo to use pre-vendored dependencies (the
+            # hax_specs_supertrait_assoc crate has the same dependencies as
+            # hax_specs)
+            for crate in hax_specs hax_specs_supertrait_assoc; do
+              mkdir -p tests/src/$crate/.cargo
+              cat > tests/src/$crate/.cargo/config.toml <<CARGOEOF
             [net]
             offline = true
             [source.crates-io]
@@ -258,6 +262,7 @@
             [source.vendored-sources]
             directory = "${haxSpecsVendor}"
             CARGOEOF
+            done
 
             # Copy the tests
             cp -r tests tests-copy
