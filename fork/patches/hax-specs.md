@@ -59,6 +59,12 @@ are consumed by the producer.
   0.4.2.
 - `tests/src/hax_specs_supertrait_assoc` (known failure): a supertrait with an
   associated type.
+- `tests/src/hax_specs_clash_pre` and `tests/src/hax_specs_clash_spec`
+  (known failures, expected outputs `tests/src/hax_specs_clash_*.lean.out`):
+  an item `foo::pre` (resp. `foo::spec`) clashes with the precondition (resp.
+  the spec) of a contracted `foo`, which is an error (#82). The test runner
+  passes `-abort-on-error`, so Aeneas stops at the first error: one crate per
+  clash. They have the same dependencies as `hax_specs`.
 - The `hax-lib` crates are vendored for the nix check (`haxSpecsVendor` in
   `flake.nix`, shared by the `hax_specs*` crates).
 

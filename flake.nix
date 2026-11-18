@@ -218,7 +218,7 @@
         };
         
         # Vendor all cargo dependencies for the hax_specs test crates (hax_specs,
-        # hax_specs_supertrait_assoc)
+        # hax_specs_supertrait_assoc, hax_specs_clash_*)
         haxSpecsVendor =
           (import inputs.charon.inputs.nixpkgs {
             inherit system;
@@ -250,9 +250,10 @@
             export CARGO_CMD=cargo
 
             # Configure cargo to use pre-vendored dependencies (the
-            # hax_specs_supertrait_assoc crate has the same dependencies as
-            # hax_specs)
-            for crate in hax_specs hax_specs_supertrait_assoc; do
+            # hax_specs_supertrait_assoc and hax_specs_clash_* crates have the
+            # same dependencies as hax_specs)
+            for crate in hax_specs hax_specs_supertrait_assoc \
+                hax_specs_clash_pre hax_specs_clash_spec; do
               mkdir -p tests/src/$crate/.cargo
               cat > tests/src/$crate/.cargo/config.toml <<CARGOEOF
             [net]

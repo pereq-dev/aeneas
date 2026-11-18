@@ -762,8 +762,25 @@ let id_to_string (span : Meta.span option) (id : id) (ctx : extraction_ctx) :
         Charon.GAstUtils.get_method_name ctx.crate trait_decl_id method_id
       in
       trait_decl_id_to_string trait_decl_id ^ ", method name: " ^ method_name
-  | SpecId id -> "spec_id: " ^ Spec.SpecId.to_string id
-  | ProofObligationId id -> "proof_obligation_id: " ^ Spec.ProofId.to_string id
+  | SpecId id -> (
+      match
+        List.find_opt
+          (fun (s : Spec.spec) -> Spec.SpecId.equal_id s.id id)
+          ctx.specs
+      with
+      | Some s ->
+          "spec of function: " ^ fun_decl_id_to_string ctx (Spec.spec_fun s)
+      | None -> "spec_id: " ^ Spec.SpecId.to_string id)
+  | ProofObligationId id -> (
+      match
+        List.find_opt
+          (fun (o : Spec.proof_obligation) -> Spec.ProofId.equal_id o.id id)
+          ctx.proof_obligations
+      with
+      | Some o ->
+          "proof obligation of function: "
+          ^ fun_decl_id_to_string ctx (Spec.proof_obligation_fun o)
+      | None -> "proof_obligation_id: " ^ Spec.ProofId.to_string id)
 
 let lean_keywords_set : StringSet.t Lazy.t =
   lazy (StringSet.of_list LeanKeywords.lean_keywords)

@@ -301,7 +301,7 @@ mod trait_clauses {
 }
 
 // Items with names like the generated `foo.pre`/`foo.post`/`foo.spec`/
-// `foo.spec.proof` which don't clash (a clash is an error).
+// `foo.spec.proof` which don't clash (clashes: `hax_specs_clash_*`).
 #[allow(dead_code)]
 mod reserved_names {
     use hax_lib::*;
