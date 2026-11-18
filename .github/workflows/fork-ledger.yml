@@ -1,0 +1,80 @@
+# Checks the fork's patch ledger: every fork commit carries exactly one
+# `Fork-Patch: <patch-name>` trailer, and every patch has a description file
+# `fork/patches/<patch-name>.md`. The rules are listed in the docstring of
+# `fork/scripts/check-ledger.py`.
+#
+# - Pull requests to `dev` are checked in PR mode, so that their authors get
+#   early feedback on their own commits.
+# - Pull requests land on `dev` through a merge queue, which may squash or
+#   rebase them. The commits of each merge group are the ones that land on
+#   `dev`, so they are checked in PR mode too, against the group's base.
+# - Draft PRs from `dev-YYYY-MM-DD-rebased` branches of this repository, which
+#   only run CI for a rebase of the fork, and pushes to `dev` are checked in
+#   stack mode.
+#
+# To run the check locally before opening a PR (with `origin` being
+# cryspen/aeneas and `upstream` AeneasVerif/aeneas, both fetched):
+#
+#     fork/scripts/check-ledger.py pr --upstream upstream/main --base origin/dev
+name: Fork ledger
+
+on:
+  pull_request:
+    # `edited` re-runs the check when the PR's base branch changes; the draft
+    # events when the PR switches between PR and stack mode.
+    types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
+    branches:
+      - dev
+  merge_group:
+    types: [checks_requested]
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The PR's own head commit rather than its merge with `dev`; for a
+          # merge group, its head commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Full history and all branches, including the old `dev-YYYY-MM-DD`
+          # branches that identify PRs based on a `dev` from before a rebase.
+          fetch-depth: 0
+      - name: Fetch upstream main
+        run: |
+          git fetch --no-tags https://github.com/AeneasVerif/aeneas.git \
+            +main:refs/remotes/upstream/main
+      - name: Check the ledger
+        env:
+          EVENT: ${{ github.event_name }}
+          # Empty outside of pull requests.
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+          # Empty outside of merge groups.
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+        run: |
+          check=fork/scripts/check-ledger.py
+          if [ "$EVENT" = merge_group ]; then
+            exec "$check" pr --upstream upstream/main --base "$GROUP_BASE" --head HEAD
+          fi
+          if [ "$EVENT" != pull_request ]; then
+            exec "$check" stack --upstream upstream/main --head HEAD
+          fi
+          if [[ "$HEAD_REPO" == "$REPO" && "$DRAFT" == true \
+                && "$HEAD_REF" =~ ^dev-[0-9]{4}-[0-9]{2}-[0-9]{2}-rebased$ ]]; then
+            exec "$check" stack --upstream upstream/main --head HEAD --adjacent
+          fi
+          exec "$check" pr --upstream upstream/main --base "origin/$BASE_REF" --head HEAD
