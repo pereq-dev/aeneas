@@ -80,7 +80,10 @@ one crate per error, so that each output shows one. `make extract-hax` extracts 
 them with `cargo hax extract`, fails if one succeeds, and records the error output of Aeneas in
 `tests/hax/failures/<crate>.out`, which is committed, like the outputs of `known-failure` tests.
 
-These tests are not run in CI. `make verify-hax` needs a version of hax whose Lean libraries
+The CI job `hax` runs them with the release of hax: it fails if the extraction changes the
+committed outputs (run `make extract-hax` and commit them), or if `make verify-hax` fails.
+
+`make verify-hax` needs a version of hax whose Lean libraries
 (`Hax`, `CoreModels`) build against this aeneas. To try another hax branch locally, check it out in
 `HAX_DIR` and install its `cargo hax` (`./setup.sh` in `HAX_DIR`, or run inside
 `nix develop .#ci-examples` there, which provides it). To move to another release, update the

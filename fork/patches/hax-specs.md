@@ -85,6 +85,9 @@ are consumed by the producer.
   library of the `hax-lib` package; `HAX_DIR=<hax checkout>` uses a checkout
   and the `cargo hax` on PATH instead. `make clean-generated-aeneas` leaves
   `tests/hax` alone.
+- The CI job `hax` (`.github/workflows/ci.yml`) runs them with the release of
+  hax, on the aeneas and charon of `nix build .#aeneas`, and fails if the
+  extraction changes the committed outputs.
 - `make verify-hax` builds the extracted code against the Lean libraries
   (`Hax`, `CoreModels`) of that hax, which must build against this aeneas:
   Lean modules, on aeneas's Lean toolchain (hax `main` does since 721d1a27,

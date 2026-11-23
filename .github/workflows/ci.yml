@@ -159,6 +159,56 @@ jobs:
           path: *lean_build_paths
           key: ${{ needs.diff_lean_files.outputs.lean_cache_key }}
 
+  # The hax tests (`tests/hax`, see `tests/README.md`), with the release of hax
+  # that the test crates require: the extraction must reproduce the committed
+  # outputs, which must build, with every obligation proved.
+  hax:
+    needs: [select-runner, diff_lean_files]
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runs_on) }}
+    steps:
+      - *install_nix
+      - *setup_cachix_push
+      - uses: actions/checkout@v4
+      - name: Build aeneas and charon
+        # `scripts/test-hax.sh` runs `bin/aeneas` and `charon/bin/charon`, and
+        # hax expects `charon-driver` next to `charon`, which only holds in
+        # charon's own package.
+        run: |
+          nix build -L .#aeneas -o aeneas-nix
+          mkdir -p bin charon
+          ln -s "$(realpath aeneas-nix/bin/aeneas)" bin/aeneas
+          ln -s "$(dirname "$(realpath aeneas-nix/bin/charon)")" charon/bin
+      # The build of the aeneas Lean library by the `lean` job, if any.
+      - uses: actions/cache/restore@v6
+        with:
+          path: *lean_build_paths
+          key: ${{ needs.diff_lean_files.outputs.lean_cache_key }}
+          restore-keys: ${{ needs.diff_lean_files.outputs.lean_cache_prefix }}
+      # The `cargo-hax` that `scripts/test-hax.sh` installs. A new release only
+      # adds a directory: the script keys the cache on the version.
+      - uses: actions/cache@v4
+        with:
+          path: tests/hax/.hax-cache/*/bin
+          key: hax-cache-${{ hashFiles('tests/hax/Cargo.toml', 'tests/hax/failures/*/Cargo.toml') }}
+      - name: Extract the hax tests
+        env:
+          RUSTUP_TOOLCHAIN: stable
+        run: |
+          nix develop --command bash -c \
+            "rustup toolchain install stable --profile minimal && ./scripts/test-hax.sh extract"
+      - name: Check that the committed outputs are up to date
+        run: |
+          if [ -z "$(git status --porcelain -- tests/hax)" ]; then
+            echo "The outputs of tests/hax are up to date."
+          else
+            git status --short -- tests/hax
+            git diff -- tests/hax
+            echo "ERROR: the outputs of tests/hax are out of date. Run 'make extract-hax' and commit them."
+            exit 1
+          fi
+      - name: Build the extracted code and check the proofs
+        run: nix develop --command ./scripts/test-hax.sh verify
+
   charon-pin-is-forward:
     needs: [select-runner]
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runs_on) }}
