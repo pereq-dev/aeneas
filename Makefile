@@ -37,6 +37,7 @@ LLBC_DIR ?= tests/llbc
 IN_CI ?=
 
 # A checkout of hax (https://github.com/cryspen/hax), for `make test-hax`.
+# If empty, the hax tests use the release of hax that they require.
 HAX_DIR ?=
 
 ####################################
@@ -216,8 +217,9 @@ cargo-test:
 # The hax tests (`tests/hax`): extract the test crate with `cargo hax extract`
 # (proof scenario `hax-tests`), which drives the charon and aeneas of this
 # checkout, then build the extracted Lean code. Not part of `test` and
-# `verify`: they need `cargo hax` and a checkout of hax
-# (https://github.com/cryspen/hax), e.g.
+# `verify`. They use the release of hax that the test crate requires
+# (`cargo-hax` is installed in `tests/hax/.hax-cache`), or a checkout of hax
+# (https://github.com/cryspen/hax) with its `cargo hax` on PATH, e.g.
 # `make test-hax HAX_DIR=../hax`. `test-hax` runs the two steps in order, even
 # under `make -j`.
 .PHONY: test-hax
@@ -225,16 +227,12 @@ test-hax: extract-hax
 	$(MAKE) verify-hax
 
 .PHONY: extract-hax
-extract-hax: build-dev check-hax-dir
+extract-hax: build-dev
 	./scripts/test-hax.sh extract "$(HAX_DIR)"
 
 .PHONY: verify-hax
-verify-hax: check-hax-dir
+verify-hax:
 	./scripts/test-hax.sh verify "$(HAX_DIR)"
-
-.PHONY: check-hax-dir
-check-hax-dir:
-	@[ -n "$(HAX_DIR)" ] || { echo 'error: set HAX_DIR to a checkout of hax, e.g. `make test-hax HAX_DIR=../hax`'; exit 1; }
 
 # Replay the Lean tests and time them
 .PHONY: timed-lean

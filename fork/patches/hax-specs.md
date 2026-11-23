@@ -54,7 +54,7 @@ are consumed by the producer.
 
 ## Tests
 
-- `tests/hax` (fork PR #83) is a crate on `hax-lib` 0.4.2, extracted the way
+- `tests/hax` (fork PR #83) is a crate on `hax-lib` 0.5, extracted the way
   hax users do it: `cargo hax extract` runs the proof scenario `hax-tests` of
   `tests/hax/hax.toml`, which points hax at `bin/aeneas` and
   `charon/bin/charon`. The extracted code (`tests/hax/proofs/hax-tests/lean`,
@@ -78,14 +78,17 @@ are consumed by the producer.
   (committed).
 - `tests/hax/failures/supertrait_assoc`: conditions of a method of a trait
   whose supertrait has an associated type, which is an error (#80).
-- Not run by `make test`: `make test-hax HAX_DIR=<hax checkout>`
-  (`scripts/test-hax.sh`; `extract-hax` and `verify-hax` run the two steps)
-  needs `cargo hax` and a checkout of hax. `make clean-generated-aeneas`
-  leaves `tests/hax` alone.
+- Not run by `make test`: `make test-hax` (`scripts/test-hax.sh`; `extract-hax`
+  and `verify-hax` run the two steps). By default it uses the release of hax
+  that the crates require: the `hax-lib` they resolve to, the `cargo-hax` of
+  the same version (installed in `tests/hax/.hax-cache`) and the hax Lean
+  library of the `hax-lib` package; `HAX_DIR=<hax checkout>` uses a checkout
+  and the `cargo hax` on PATH instead. `make clean-generated-aeneas` leaves
+  `tests/hax` alone.
 - `make verify-hax` builds the extracted code against the Lean libraries
-  (`Hax`, `CoreModels`) of the hax checkout, which must build against this
-  aeneas: Lean modules, on aeneas's Lean toolchain (hax `main` does since
-  721d1a27, 2026-11-04).
+  (`Hax`, `CoreModels`) of that hax, which must build against this aeneas:
+  Lean modules, on aeneas's Lean toolchain (hax `main` does since 721d1a27,
+  2026-11-04, and so does the 0.5.0 release).
 
 ## Rebase notes
 

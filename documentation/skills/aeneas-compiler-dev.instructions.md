@@ -67,12 +67,14 @@ This runs the Charon→Aeneas pipeline and updates the generated Lean/Coq/F* fil
 in `tests/`. Always regenerate after changing the compiler or the Rust source of a test.
 
 The hax tests (`tests/hax/`) are not part of `gmake test`: they go through
-`cargo hax extract` (proof scenario `hax-tests`) and need `cargo hax` on `PATH` plus a checkout of
-[hax](https://github.com/cryspen/hax):
+`cargo hax extract` (proof scenario `hax-tests`). By default they use the release of
+[hax](https://github.com/cryspen/hax) that the test crate requires (`cargo-hax` is installed in
+`tests/hax/.hax-cache`); `HAX_DIR` selects a checkout of hax instead, with its `cargo hax` on `PATH`:
 
 ```bash
-gmake test-hax HAX_DIR=../hax      # extract, then build the Lean output
-gmake extract-hax HAX_DIR=../hax   # extract only
+gmake test-hax                     # extract, then build the Lean output
+gmake extract-hax                  # extract only
+gmake test-hax HAX_DIR=../hax      # with a checkout of hax
 ```
 
 See `tests/README.md` ("hax tests") for details.

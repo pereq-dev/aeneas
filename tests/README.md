@@ -40,25 +40,35 @@ on it confidently.
 
 ## hax tests
 
-`tests/hax/` is a crate (on `hax-lib` 0.4.2) that is extracted the way
+`tests/hax/` is a crate (on `hax-lib` 0.5) that is extracted the way
 [hax](https://github.com/cryspen/hax) users extract them: through `cargo hax extract`, which runs
 the proof scenario `hax-tests` of `tests/hax/hax.toml` and drives charon and aeneas. hax is pointed
 at the binaries of this checkout (`bin/aeneas`, `charon/bin/charon`) by the same `hax.toml`. The
 extracted Lean code lives in `tests/hax/proofs/hax-tests/lean/` (Lean package `HaxTests`), next to
 the Lake project that builds it and the handwritten proofs, and is committed.
 
-These tests are not run by `make test`. Run them with a checkout of hax and the matching `cargo hax`
-on your `PATH`:
+These tests are not run by `make test`. Run them with:
+
+```bash
+make test-hax
+```
+
+This regenerates the outputs, then builds them with the Lake project
+`tests/hax/proofs/hax-tests/lean/lakefile.toml`, against the aeneas Lean library of this checkout
+and the hax Lean library. `make extract-hax` and `make verify-hax` run the two steps separately.
+
+By default, the tests use the release of hax that the crate requires: the `hax-lib` it resolves to
+on crates.io, the `cargo-hax` of the same version (the two must match), which is installed with
+`cargo install` into `tests/hax/.hax-cache/<version>/`, and the hax Lean library shipped in the
+`hax-lib` package, copied there too. To use a checkout of hax instead, with its `cargo hax` on your
+`PATH`:
 
 ```bash
 make test-hax HAX_DIR=../hax
 ```
 
-This regenerates the outputs, with the crate using the `hax-lib` of `HAX_DIR`, then builds them
-with the Lake project `tests/hax/proofs/hax-tests/lean/lakefile.toml`, against the aeneas Lean
-library of this checkout and the hax Lean library of `HAX_DIR`. `HAX_DIR` itself is not modified
-(except for Lake's build directory). `make extract-hax` and `make verify-hax` run the two steps
-separately.
+The crate then uses the `hax-lib` of `HAX_DIR`, and is built against the hax Lean library of
+`HAX_DIR`. `HAX_DIR` itself is not modified (except for Lake's build directory).
 
 Every contract of the test crate has a handwritten proof under `Verification/`, under the name of
 its obligation; a contract that cannot be proved is left out of the crate, with a comment saying
@@ -70,10 +80,11 @@ one crate per error, so that each output shows one. `make extract-hax` extracts 
 them with `cargo hax extract`, fails if one succeeds, and records the error output of Aeneas in
 `tests/hax/failures/<crate>.out`, which is committed, like the outputs of `known-failure` tests.
 
-These tests are not run in CI. `make verify-hax` needs a hax checkout whose Lean libraries
-(`Hax`, `CoreModels`) build against this aeneas. To try another hax branch locally, check it
-out in `HAX_DIR` and install its `cargo hax` (`./setup.sh` in `HAX_DIR`, or run inside
-`nix develop .#ci-examples` there, which provides it).
+These tests are not run in CI. `make verify-hax` needs a version of hax whose Lean libraries
+(`Hax`, `CoreModels`) build against this aeneas. To try another hax branch locally, check it out in
+`HAX_DIR` and install its `cargo hax` (`./setup.sh` in `HAX_DIR`, or run inside
+`nix develop .#ci-examples` there, which provides it). To move to another release, update the
+`hax-lib` requirement of `tests/hax/Cargo.toml` and of the crates of `tests/hax/failures/`.
 
 ## Passing options to `Aeneas` and `Charon`
 

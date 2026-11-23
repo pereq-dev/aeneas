@@ -1,4 +1,5 @@
-# Only build artifacts and machine-specific files: links to the hax checkout,
+# Only build artifacts and machine-specific files: the release of hax installed
+# by `scripts/test-hax.sh`, links to the hax checkout,
 # the dependency versions it resolves to, and the `*External_Template.lean`
 # files Aeneas regenerates on each extraction. The Lean project under `proofs/`
 # (extracted code, handwritten proofs, lakefile) is committed, so that
@@ -6,6 +7,7 @@
 /Cargo.lock
 /target/
 /.cargo/
+/.hax-cache/
 # Lake's directory and the link to the hax checkout, if Lake was run in
 # `tests/hax` itself (the Lean project is under `proofs/`)
 /.lake/
