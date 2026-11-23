@@ -12,11 +12,12 @@ open Parallel
 (** The local logger *)
 let log = TranslateCore.log
 
-(** When [-core-models-lib] is on, non-local items are skipped from the main
-    extracted files (the user is expected to provide them via a separate Lean
-    library, e.g. [core_models] for [core::*] items). *)
-let skip_for_core_models_lib (is_local : bool) : bool =
-  !Config.core_models_lib && not is_local
+(** When [-core-models-lib] is on, the items of the crates that the core models
+    library provides are skipped from the main extracted files (the user is
+    expected to provide them via a separate Lean library, [core_models]). *)
+let skip_for_core_models_lib (item_meta : item_meta) : bool =
+  !Config.core_models_lib
+  && Extract.is_item_of_crates Extract.core_models_lib_crates item_meta
 
 (** The result of running the symbolic interpreter on a function:
     - the list of symbolic values used for the input values
@@ -772,8 +773,7 @@ let export_types_group (fmt : Format.formatter) (config : gen_config)
     assert (List.for_all (fun b -> b) externals)
   else if
     List.exists
-      (fun (d : Pure.type_decl) ->
-        skip_for_core_models_lib d.item_meta.is_local)
+      (fun (d : Pure.type_decl) -> skip_for_core_models_lib d.item_meta)
       defs
   then ()
   else if List.exists dont_extract defs then
@@ -984,7 +984,7 @@ let export_functions_group (fmt : Format.formatter) (config : gen_config)
   else if
     List.exists
       (fun (trans : pure_fun_translation) ->
-        skip_for_core_models_lib trans.f.item_meta.is_local)
+        skip_for_core_models_lib trans.f.item_meta)
       pure_ls
   then ()
   else (
@@ -1057,7 +1057,7 @@ let export_global (fmt : Format.formatter) (config : gen_config) (ctx : gen_ctx)
     && (((not is_opaque) && config.extract_transparent)
        || (is_opaque && config.extract_opaque))
     && (not is_external) && (not is_anon_const)
-    && not (skip_for_core_models_lib global.item_meta.is_local)
+    && not (skip_for_core_models_lib global.item_meta)
   in
   if extract then (
     (* We don't wrap global declaration groups between calls to functions
@@ -1118,7 +1118,7 @@ let export_trait_decl (fmt : Format.formatter) (_config : gen_config)
   (* Check if the trait declaration is external, in which case we ignore it *)
   if
     (not (trait_decl_is_external ctx trait_decl_id))
-    && not (skip_for_core_models_lib trait_decl.item_meta.is_local)
+    && not (skip_for_core_models_lib trait_decl.item_meta)
   then (
     let ctx = { ctx with trait_decl_id = Some trait_decl.def_id } in
     if extract_decl then (
@@ -1139,7 +1139,7 @@ let export_trait_impl (fmt : Format.formatter) (_config : gen_config)
   in
   if
     (not (trait_impl_is_external ctx trait_impl_id))
-    && not (skip_for_core_models_lib trait_impl.item_meta.is_local)
+    && not (skip_for_core_models_lib trait_impl.item_meta)
   then (
     Extract.extract_trait_impl ctx fmt ~is_rec trait_impl;
     EmitJson.record_trait_impl_if_enabled ctx trait_impl)
