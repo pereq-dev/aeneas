@@ -1,6 +1,7 @@
 # Builds the Lean code `cargo hax` extracts from the hax test crate, against
-# the aeneas Lean library of this checkout and the hax Lean library of the hax
-# checkout that `.hax-lean` links to (set up by `make test-hax HAX_DIR=...`).
+# the aeneas Lean library of this checkout and the hax Lean library that
+# `.hax-lean` links to (set up by `make verify-hax`: the one of the hax release
+# the crate requires, or of the checkout `HAX_DIR`).
 name = "hax_tests"
 defaultTargets = ["HaxTestsChecks"]
 
