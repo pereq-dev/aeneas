@@ -119,8 +119,15 @@ let initialize_type_decl_info (span : Meta.span option) (crate : crate)
      way. *)
   let get_external_info () : Pure.external_type_info option =
     let open ExternalNames in
-    ExtractName.NameMatcherMap.find_opt name_matcher_ctx def.item_meta.name
-      (external_types_map ())
+    let find map =
+      ExtractName.NameMatcherMap.find_opt name_matcher_ctx def.item_meta.name
+        (map ())
+    in
+    match find external_types_map with
+    (* See [ExternalNames.core_models_mut_regions_overrides] *)
+    | None when !Config.core_models_lib ->
+        find core_models_mut_regions_overrides
+    | info -> info
   in
   let name_to_string () =
     let env = Charon.Print.crate_to_fmt_env crate in

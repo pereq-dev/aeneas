@@ -252,4 +252,26 @@ def use_consts (x : Std.U32) : RustM Std.U32 := do
   let i2 ← core.num.U32.wrapping_add i1 LOCAL_STATIC
   core.num.U32.wrapping_add i2 core.num.Usize.BITS
 
+/-- [core_models_lib::Name]
+    Source: 'tests/src/core-models-lib.rs', lines 105:0-105:16
+    Visibility: public -/
+@[reducible]
+def Name := Unit
+
+/-- [core_models_lib::{impl core::fmt::Display for core_models_lib::Name}::fmt]:
+    Source: 'tests/src/core-models-lib.rs', lines 108:4-110:5
+    Visibility: public -/
+def Name.Insts.CoreFmtDisplay.fmt
+  (self : Name) (f : core.fmt.Formatter) :
+  RustM ((core.result.Result Unit core.fmt.Error) × core.fmt.Formatter)
+  := do
+  core.fmt.Formatter.write_str f (toStr "Name")
+
+/-- Trait implementation: [core_models_lib::{impl core::fmt::Display for core_models_lib::Name}]
+    Source: 'tests/src/core-models-lib.rs', lines 107:0-111:1 -/
+@[reducible]
+def Name.Insts.CoreFmtDisplay : core.fmt.Display Name := {
+  fmt := Name.Insts.CoreFmtDisplay.fmt
+}
+
 end core_models_lib

@@ -99,3 +99,13 @@ pub fn use_consts(x: u32) -> u32 {
         .wrapping_add(LOCAL_STATIC)
         .wrapping_add(usize::BITS)
 }
+
+/// `&mut Formatter` gets no backward function, matching the region-free
+/// `Formatter` of `core_models`.
+pub struct Name;
+
+impl core::fmt::Display for Name {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("Name")
+    }
+}
